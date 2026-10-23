@@ -1887,3 +1887,5 @@ td code {
 .camera-bay-option input[type=number]{width:4.5rem}
 
 .hamburger-icon{display:inline-flex;flex-direction:column;gap:4px;width:20px}.hamburger-icon i{display:block;height:2px;width:20px;background:currentColor;border-radius:2px}.header-controls .push-permission{margin:0;max-width:260px}
+
+.management-search,.management-ip-form{display:none!important}

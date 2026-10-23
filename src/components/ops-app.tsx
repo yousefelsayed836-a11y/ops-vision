@@ -354,7 +354,7 @@ export function OpsApp({ view }: { view: string }) {
   const [data, setData] = useState<Snapshot | null>(null);
   const categories=[...vehicleCategories,...(data?.vehicleCategories??[]).map(item=>item.code)];
   const [platformData, setPlatformData] = useState<PlatformData | null>(null);
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("organizations");
   const [loading, setLoading] = useState(view === "dashboard");
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<{ text: string; error: boolean } | null>(
@@ -427,6 +427,7 @@ export function OpsApp({ view }: { view: string }) {
       .then((result) => {
         if (!alive) return;
         setMe(result);
+        if (["SUPER_ADMIN", "PLATFORM_ADMIN"].includes(result.user.platformRole)) setTab("organizations");
         const selected = ["SUPER_ADMIN", "PLATFORM_ADMIN"].includes(
           result.user.platformRole,
         )
@@ -898,7 +899,6 @@ export function OpsApp({ view }: { view: string }) {
       ? [
           ...(canPlatform("platform.manage_tenants") ? ["organizations"] : []),
           ...(canPlatform("platform.view_bays") ? ["allBaysTitle"] : []),
-          "overview",
           ...(canPlatform("platform.review_applications")
             ? ["applications", "notifications"]
             : canPlatform('platform.manage_tenants')?['notifications']:[]),

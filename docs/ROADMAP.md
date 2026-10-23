@@ -1,0 +1,45 @@
+# Roadmap and requirement coverage
+
+2026-10-18. Implemented means local working features, not production readiness.
+
+| Stage | Implemented | Remaining |
+| --- | --- | --- |
+| Foundation | Strict TS, four DB migrations, Arabic/English, brand, executable build, docs | Mobile/accessibility QA, remote CI |
+| Authentication | Better Auth sessions, private admin CLI, recovery/revocation, tenant RBAC/custom role UI, explicit platform and tenant staff delegation | Deployment RLS/least privilege |
+| Registration | Persistent applications/history/alerts, transactional approval, single-use QR activation | External delivery |
+| Operations | Branches/hours, bays, price matrix/tax, vehicles, booking, lifecycle/concurrency/assignments/durations | Multi-service/add-ons, schedules, configurable categories |
+| Customer | Owned vehicles, booking/cancellation, history, cash receipt print, feedback | Provider notifications, full mobile QA |
+| Intelligence/finance | Basic snapshots, accepted prices, manual cash, audit/notifications | Filters, pagination, exports, refunds, subscriptions, advanced analytics |
+| Automation | Durable PostgreSQL queue, normalized events, allowlisted rules/actions, thresholds, dedupe, retries/dead-letter/history | Scheduled reconciliation, providers, production supervision |
+| AI simulation | Demo isolation, shared pipeline, human review/raw evidence | Broader scenarios/metrics |
+| Cameras | Tenant/branch/bay linkage, validated site/camera IP metadata, no secrets in snapshots | Zones, connector contracts/health, gateway, video audit |
+| Real AI | No real inference claimed | Compatible cameras/network, labeled data, compute, measured accuracy |
+
+Next slice: reporting filters/pagination and sanitized exports with authorization tests, then multi-service/add-ons/refunds. Follow with platform subscriptions/staff and camera connector contracts. Provider delivery/production launch depend on private infrastructure/credentials.
+
+Before production: retention/deletion/privacy policy, least-privilege/RLS validation, encrypted backups/successful restore, HTTPS secrets, delivery, supervised worker/monitoring. Core operation remains independent of AI.
+
+2026-10-20: Tenant and platform bay panels now expose direct Pause/Resume/Finish controls where granted. Platform management and each wash's customer panel show its fixed customer link and PNG QR, built from the organization slug and current domain. After a domain change, re-share the newly displayed QR; already distributed absolute URLs cannot rewrite themselves.
+
+2026-10-20: Main dashboards now show bay Start/Finish controls and image choices for Sedan, SUV and 4×4. Completing a wash releases the bay without requiring cash collection; payments remain separate.
+
+
+Video milestone: private MP4 upload → durable Python/OpenCV YOLOX processing → tenant/branch-scoped evidence → immutable human review is implemented and tested on the supplied clip. Next: representative fixed-camera full-cycle clips, independent labels/metrics, identity reconciliation, trained category/activity classifiers, wash-start/end definitions, then authenticated live gateway. Upload analysis must not be advertised as complete camera automation.
+
+
+Follow-up implemented: reference catalog options, reversible removal, global bays and explicitly scoped platform operations, per-wash QR/password tracking. Remaining: global bay pagination, multiselect add-ons if required, real-device/mobile QA and broader customer portal testing.
+
+
+Latest scope supersedes video roadmap: operations-only mode is current default. Date aggregates, quick customer directory, direct wash actions and organization management delivered. Remaining: pagination/exports, native installers if separately requested, actual device PWA validation, production HTTPS deployment and live camera connector only if requested. No automatic video analysis is active.
+
+
+Latest requested scope restores uploaded-video analysis. Delivered zone-event evidence, camera/bay scope and review UI; actual live RTSP gateway, clock verification for screen recordings, trained fine vehicle/body/service classification, representative labeled validation set and production supervision remain required. Do not claim those are complete.
+
+2026-10-20 customer portal: permanent per-wash link/QR and selected-bay-only public status are implemented; three vehicle category illustrations are shipped. Next required local step is recover the development PGlite database without losing the existing wash/accounts, then perform a real browser/mobile QR walkthrough. A deployed HTTPS URL is required for customers' phones; localhost QR works only on the same computer.
+
+2026-10-20 vehicle/service catalog: Motorcycle and bicycle join Sedan/SUV/4x4 in wash and customer selection. Tenant service managers and explicitly authorized platform tenant managers can add tenant-scoped custom vehicle categories and services. Each service has prices per vehicle category; the chosen category effective price is stored when a wash starts. Custom labels appear in customer tracking. Server-side permission and tenant checks protect catalog writes. Existing development DB was backed up to .data/opsvision-before-vehicle-categories-20261020.dump and migrated. Unit20, integration73, lint and typecheck passed. Next: browser walkthrough and production deployment review.
+
+2026-10-20 platform dashboard: Added direct organization provisioning with owner activation invitation, vehicle/service catalog controls on overview, and a permission-gated per-wash report of completed vehicles by category with date filter. Database cleanup requested by user: retained 4d6c942f-43d9-446e-9ce8-168485ec07fa (مغسلة التجربة), archived 8 other organizations, cleared 10 wash sessions and 6 applications plus dependent history/tracking; one active organization, zero washes and zero applications verified. Backup .data/opsvision-before-single-wash-20261020.dump taken first. Archived organizations remain recoverable. Unit20, integration75, typecheck and lint passed; production build pending.
+
+2026-10-20 vehicle imagery and wash report: Generated transparent motorcycle and bicycle PNG cutouts with the built-in image generator; saved to public/assets/motorcycle.png and public/assets/bicycle.png. Both show in vehicle picker, active bay tile and public tracking. Sedan image faces left via CSS. Wash reports for platform viewers and tenant report viewers now show selected day, week, all-time, average completed-wash duration, vehicle-type counts, bay breakdown, and 20 latest completed washes. Each wash has a 240-character public customer notice, editable by platform tenant managers and tenant profile managers, displayed on its own public tracking page. New Organization.publicNotice migration applied to live and test DB. Unit20, integration77, lint, typecheck and isolated production build passed. Live owner login/snapshot/report/public directory and all three image URLs verified; 2 bays and 2 services intact. Current logical backup: .data/opsvision-report-notice-images-20261020.dump.
+2026-10-23 next camera milestone: collect the camera/NVR model and authorized stream endpoint, confirm network reachability, calibrate each bay region for shared cameras, validate entry/exit and category labels against representative footage, then enable supervised operational automation with failure alerts. Current delivery covers IP registry and bay mapping only. Test PWA installation on physical iPhone/Android/Windows/macOS after HTTPS deployment.

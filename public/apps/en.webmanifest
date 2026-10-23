@@ -1,0 +1,26 @@
+{
+  "id": "/en/dashboard",
+  "name": "OpsVision — Management",
+  "short_name": "OpsVision",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/en/dashboard",
+  "scope": "/en/dashboard",
+  "display": "standalone",
+  "background_color": "#f7f9fc",
+  "theme_color": "#b9dcf7",
+  "icons": [
+    {
+      "src": "/apps/opsvision-pink-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apps/opsvision-pink-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

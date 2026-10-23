@@ -1,0 +1,1 @@
+ALTER TABLE "Wash" ADD COLUMN "timeAdjustmentSeconds" INTEGER NOT NULL DEFAULT 0;

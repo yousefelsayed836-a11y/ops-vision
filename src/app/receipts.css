@@ -1,0 +1,71 @@
+.receipt-dialog h2 {
+  margin-bottom: 10px;
+}
+.receipt-dialog > small {
+  margin-top: 8px;
+}
+.receipt-detail {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--line);
+  padding: 13px 0;
+  font-size: 12px;
+}
+.receipt-detail b {
+  font-weight: 600;
+}
+.receipt-dialog .receipt-detail:last-of-type {
+  font-size: 17px;
+  border-bottom: 2px solid var(--dark);
+  margin-bottom: 18px;
+}
+.pricing-service {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+.pricing-service:last-child {
+  border-bottom: 0;
+}
+.pricing-service .section-title {
+  margin-bottom: 3px;
+}
+.field select[multiple] {
+  padding: 8px;
+  min-height: 180px;
+}
+.field select[multiple] option {
+  padding: 6px;
+  border-radius: 5px;
+}
+.field:has(select[multiple]) {
+  grid-column: 1/-1;
+}
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .receipt-dialog,
+  .receipt-dialog * {
+    visibility: visible;
+  }
+  .receipt-dialog {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    border: 0;
+    box-shadow: none;
+    margin: 0;
+    background: white;
+    overflow: visible;
+  }
+  .receipt-dialog .receipt-actions {
+    display: none;
+  }
+  .receipt-dialog::backdrop {
+    display: none;
+  }
+}

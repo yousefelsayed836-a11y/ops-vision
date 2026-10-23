@@ -1,0 +1,1 @@
+ALTER TABLE "CameraVisit" ADD COLUMN "categoryEvidence" JSONB NOT NULL DEFAULT '{}';

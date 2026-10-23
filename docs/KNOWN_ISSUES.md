@@ -1,0 +1,33 @@
+# Known issues and limits
+
+- This milestone does not complete MASTER_REQUIREMENTS.md or establish production readiness.
+- Local PGlite dev/test persistence/migrations verified; Docker, PostgreSQL deployment, remote CI, stress tests and backup restore unverified. Compose/CI files provided.
+- Reporting uses bounded snapshots (200 washes); full date/branch filters, pagination and safe exports pending. Screens are not complete accounting.
+- Subscriptions, multi-service/add-ons, refunds, configurable categories and employee schedules pending. Tenant/platform staff management is now implemented with explicit permissions.
+- PostgreSQL RLS/least-privilege validation and retention/deletion policies pending. Current tenant protection: tested server scoping/composite constraints.
+- Camera metadata/isolated simulation implemented; zones/connectors/live streams/real AI pending. Cameras/network/data/compute required.
+- Email/SMS/WhatsApp/push/payment credentials absent. Outbox delivery pending; manual cash confirmation is not online settlement.
+- Arabic public page/registration success have browser evidence. Full authenticated/mobile/accessibility QA pending.
+- Five high development dependency advisories remain; production audit reported zero at last check.
+- Requested local demo administrator/owner/worker accounts exist, with random passwords in a private sibling file outside source. No published default credentials or public bootstrap exists.
+
+See ROADMAP.md and TESTING.md.
+
+- Customer URLs displayed in the dashboard use the domain currently serving the site. Old copied links and QR codes retain the old domain after a move; staff must share the updated link/QR. The organization slug remains stable.
+
+
+Video update: real local MP4 decoding/COCO detection/tracking and website upload/evidence/review now implemented; historical statements saying no inference are superseded for uploaded files only. Full wash/action detection, fine vehicle classification, camera gateway/live RTSP, retention/decoder isolation and production validation remain pending. See VIDEO_ANALYSIS.md.
+
+
+Latest UI: catalog templates require explicit tenant price/duration; no inferred reference prices. Global bay screen is bounded500 (pagination pending). Customer tracking is a limited per-wash portal, not a full email customer account; new login replaces prior tracking session, link lasts7days. Reversible organization removal preserves records and can restore. New follow-up UI could not be visually inspected because browser acquisition was denied by URL protocol policy; API/integration checks passed.
+
+
+Latest limits: daily server aggregates no longer have snapshot200 cap, but session lists remain bounded. Platform organizations/bays capped500; customer directory100 profiles and10 sessions each. Add pagination before larger deployments. Quick contact is private per-wash tracking rather than email-based full customer account. Quick inline vehicle creation can remain if a subsequent wash creation fails, but bay claim/session creation remains transactional and conflicting start cannot create a second wash. IP saving does not probe/connect/stream cameras. Operations-only removes old feature routes with410; historical analysis/rule tests verify retained code, not an enabled UI. OS/browser confirmation cannot be bypassed; iPhone requires Safari Add to Home Screen and another device needs a deployed HTTPS address. No native installer or offline tenant cache. Actual installed-device, complete customer form and mobile dashboard walkthrough remain unverified.
+
+
+New analysis limits: the supplied clip is a screen recording with overlays and potential playback scrubbing. Relative video offsets are not verified camera wall time. COCO cannot reliably classify sedan/CUV/SUV or business wash package; manual labels are separate. Zone dwell is not active washing duration. Entry/exit needs calibrated region and stable observations; missing detections do not prove exit.0.2fps experimental full-clip pass has about5second sampling intervals and cannot validate fast boundary crossings. Cached detections are tied to source path/size/mtime/model-size/config; delete/recompute by changed config if needed. Production decoder sandbox/retention and live camera networking remain pending. Sandboxed Python installations became unreadable after tool-context restart; fresh local runtime used without ACL changes.
+
+2026-10-20: Development PGlite data at `.data/pglite-development-restored` fails to open (`Aborted()` in WASM) and localhost app is unavailable; the separate test database opens and all integration tests pass. The stale `postmaster.pid` was backed up before removal, but this did not fix startup. Do not replace or delete the development data to make a preview look healthy. The public bay link/QR flow has typecheck, lint, build and database test coverage, but has not been visually verified in a browser. Public links intentionally expose current bay operational status and vehicle category to anyone holding the organization link; no personal details or prices are included.
+2026-10-21: The dashboard camera guide describes IP discovery and bay assignment. The saved IP is not a tested live stream; camera credentials, RTSP/ONVIF endpoint and a verified connector are still required for automation.
+2026-10-22: Wash time controls now support 30-second increments and a custom 0.5–120 minute adjustment. The additive `timeAdjustmentSeconds` migration was applied to the isolated test database, and typecheck/lint pass. The development PGlite data still fails to start with `Aborted()`; this migration has not been applied there and the live dashboard has not been verified. Preserve the existing development data for recovery before switching any database path.
+2026-10-23: Camera IP/bay mapping is configuration only. The user reports viewing cameras via an app named “ddms”; the device/NVR model and a verified authorized RTSP/ONVIF stream are unknown. No live camera connector or validated vehicle/service classifier is active, so autonomous start/finish must not be presented as working. Local PWA assets respond correctly, but install on physical devices and HTTPS deployment are still unverified.

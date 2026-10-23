@@ -1,0 +1,32 @@
+[
+  {
+    "category": "SEDAN",
+    "file": "SEDAN.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Toyota_Camry_Front.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "source": "https://commons.wikimedia.org/wiki/File:Toyota_Camry_Front.jpg",
+    "author": "Arad",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "sha256": "9eb131b63d96c2139d7f390ffeb39e87c371fcbdb3520d730aa11a98c99f7c57"
+  },
+  {
+    "category": "SUV",
+    "file": "SUV.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/04/2019_Hyundai_Tucson_Front-Side.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "source": "https://commons.wikimedia.org/wiki/File:2019_Hyundai_Tucson_Front-Side.jpg",
+    "author": "Ki hoon",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "sha256": "9d775dae678778bca1306e96f494d17d019f1949dd471198483556251371f785"
+  },
+  {
+    "category": "FULL_SIZE_SUV",
+    "file": "FULL_SIZE_SUV.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/21/Mercedes-Benz_W463_G500_V8_Arctic_White_front_left.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "source": "https://commons.wikimedia.org/wiki/File:Mercedes-Benz_W463_G500_V8_Arctic_White_front_left.jpg",
+    "author": "Ethan Llamas",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "sha256": "223d9b9c84318608b0ab706d2431e3ae3c647d7f43780f9aab6c6e7362ed0f92"
+  }
+]

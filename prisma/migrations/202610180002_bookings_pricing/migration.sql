@@ -1,0 +1,18 @@
+ALTER TABLE "Organization" ADD COLUMN "cancellationLeadHours" INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE "Branch" ADD COLUMN "opensAt" TEXT NOT NULL DEFAULT '00:00', ADD COLUMN "closesAt" TEXT NOT NULL DEFAULT '23:59';
+ALTER TABLE "WashService" ADD COLUMN "taxRate" DECIMAL(5,2) NOT NULL DEFAULT 0;
+ALTER TABLE "Wash" ADD COLUMN "reservedUntil" TIMESTAMP(3), ADD COLUMN "subtotal" DECIMAL(12,2) NOT NULL DEFAULT 0, ADD COLUMN "taxAmount" DECIMAL(12,2) NOT NULL DEFAULT 0, ADD COLUMN "discount" DECIMAL(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE "Wash" ALTER COLUMN "checkedInAt" DROP NOT NULL, ALTER COLUMN "checkedInAt" DROP DEFAULT;
+UPDATE "Wash" SET "subtotal" = "price";
+CREATE TABLE "ServicePricingRule" ("id" TEXT NOT NULL,"orgId" TEXT NOT NULL,"serviceId" TEXT NOT NULL,"category" TEXT NOT NULL,"size" TEXT NOT NULL,"price" DECIMAL(12,2) NOT NULL,CONSTRAINT "ServicePricingRule_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "ServicePricingRule_serviceId_category_size_key" ON "ServicePricingRule"("serviceId","category","size");
+CREATE INDEX "ServicePricingRule_orgId_serviceId_idx" ON "ServicePricingRule"("orgId","serviceId");
+ALTER TABLE "ServicePricingRule" ADD CONSTRAINT "ServicePricingRule_orgId_fkey" FOREIGN KEY ("orgId") REFERENCES "Organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ServicePricingRule" ADD CONSTRAINT "ServicePricingRule_serviceId_orgId_fkey" FOREIGN KEY ("serviceId","orgId") REFERENCES "WashService"("id","orgId") ON DELETE RESTRICT ON UPDATE CASCADE;
+CREATE TABLE "Feedback" ("id" TEXT NOT NULL,"orgId" TEXT NOT NULL,"washId" TEXT NOT NULL,"customerUserId" TEXT NOT NULL,"rating" INTEGER NOT NULL,"comment" TEXT NOT NULL,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,CONSTRAINT "Feedback_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "Feedback_washId_key" ON "Feedback"("washId");
+CREATE INDEX "Feedback_orgId_createdAt_idx" ON "Feedback"("orgId","createdAt");
+ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_orgId_fkey" FOREIGN KEY ("orgId") REFERENCES "Organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_washId_orgId_fkey" FOREIGN KEY ("washId","orgId") REFERENCES "Wash"("id","orgId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Feedback" ADD CONSTRAINT "Feedback_rating_check" CHECK ("rating" BETWEEN 1 AND 5);
+ALTER TABLE "ServicePricingRule" ADD CONSTRAINT "ServicePricingRule_nonnegative_price_check" CHECK ("price" >= 0);

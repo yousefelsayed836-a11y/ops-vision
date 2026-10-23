@@ -1,0 +1,69 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    ".next-dev/types/**/*.ts",
+    ".next-dev/dev/types/**/*.ts",
+    ".next-dev2/types/**/*.ts",
+    ".next-dev2/dev/types/**/*.ts",
+    ".next-dev4/types/**/*.ts",
+    ".next-dev4/dev/types/**/*.ts",
+    ".next-dev-persistent /types/**/*.ts",
+    ".next-dev-persistent /dev/types/**/*.ts",
+    ".next-dev-terminal/types/**/*.ts",
+    ".next-dev-terminal/dev/types/**/*.ts",
+    ".next-dev-3002/types/**/*.ts",
+    ".next-dev-3002/dev/types/**/*.ts",
+    ".next-cmd /types/**/*.ts",
+    ".next-cmd /dev/types/**/*.ts",
+    ".next-local/types/**/*.ts",
+    ".next-local/dev/types/**/*.ts",
+    ".next-port3000/types/**/*.ts",
+    ".next-port3000/dev/types/**/*.ts",
+    ".next-recovered-20261020/types/**/*.ts",
+    ".next-recovered-20261020/dev/types/**/*.ts",
+    ".next-build-custom-catalog/types/**/*.ts",
+    ".next-build-custom-catalog/dev/types/**/*.ts",
+    ".next-build-platform-report/types/**/*.ts",
+    ".next-build-platform-report/dev/types/**/*.ts",
+    ".next-build-report-notice-images/types/**/*.ts",
+    ".next-build-report-notice-images/dev/types/**/*.ts",
+    ".next-verify-3001/types/**/*.ts",
+    ".next-verify-3001/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

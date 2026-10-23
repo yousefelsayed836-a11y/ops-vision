@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {resolve} from 'node:path';
+const file=process.argv[2];if(!file||!/^[a-zA-Z0-9-]+\.txt$/.test(file))throw Error('Expected private account file name');
+const text=await readFile(resolve('..',file),'utf8');
+const url=text.match(/^رابط متابعة العميل: (.+)$/m)?.[1];
+const password=text.match(/^كلمة مرور المتابعة: (.+)$/m)?.[1];
+assert(url&&password);
+const id=new URL(url).searchParams.get('id');assert(id);
+const base='http://127.0.0.1:3000';
+let response=await fetch(`${base}/api/v1/tracking/${id}`);assert.equal(response.status,401);
+response=await fetch(`${base}/api/v1/tracking/${id}/login`,{method:'POST',headers:{origin:'http://localhost:3000','content-type':'application/json'},body:JSON.stringify({password})});assert.equal(response.status,200);
+const cookie=response.headers.getSetCookie().map(value=>value.split(';')[0]).join('; ');
+response=await fetch(`${base}/api/v1/tracking/${id}`,{headers:{cookie}});assert.equal(response.status,200);
+const data=await response.json();assert.equal(data.status,'COMPLETED');assert(!('plate' in data));assert(!('price' in data));
+console.log('Tracking access passed; completed status shown without plate or price.');

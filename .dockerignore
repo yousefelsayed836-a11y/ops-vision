@@ -1,0 +1,9 @@
+node_modules
+.next
+.env
+.env.*.local
+.data
+.git
+coverage
+*.log
+next.config.compiled.js

@@ -33,6 +33,6 @@ if errorlevel 1 (
   echo Upload failed. Read the error above, then run this file again after fixing it.
 ) else (
   echo.
-  echo Upload complete: https://github.com/yousefelsayed836-a1ly/ops-vision
+  echo Upload complete: https://github.com/yousefelsayed836-a11y/ops-vision
 )
 pause

@@ -1,3 +1,5 @@
+name: opsvision
+
 services:
   postgres:
     image: postgres:17-bookworm
@@ -29,12 +31,12 @@ services:
       dockerfile: infrastructure/Dockerfile
       target: web
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${OPSVISION_HOST_PORT:-3100}:3000"
     environment:
       DATABASE_URL: ${DATABASE_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set a random secret of at least 32 characters}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
-      APP_URL: ${APP_URL}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?Set the external HTTPS origin}
+      APP_URL: ${APP_URL:?Set the external HTTPS origin}
       APP_ENV: ${APP_ENV:-production}
       ALLOW_SIMULATION: ${ALLOW_SIMULATION:-false}
     depends_on:
@@ -60,8 +62,8 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
-      APP_URL: ${APP_URL}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?Set the external HTTPS origin}
+      APP_URL: ${APP_URL:?Set the external HTTPS origin}
       APP_ENV: ${APP_ENV:-production}
       ALLOW_SIMULATION: ${ALLOW_SIMULATION:-false}
     depends_on:

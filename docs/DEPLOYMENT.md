@@ -1,5 +1,7 @@
 # Deployment and local operation
 
+For a Droplet that already hosts other websites, see [DIGITALOCEAN_SHARED_DROPLET.md](DIGITALOCEAN_SHARED_DROPLET.md). The Compose project uses a separate loopback port and must be routed through the existing proxy under a dedicated hostname.
+
 ## Current status
 
 Local development server and PostgreSQL-compatible databases have run. No public production URL, Docker run, CI run, real email delivery or real camera integration has been verified. Do not advertise this milestone as a complete production release.

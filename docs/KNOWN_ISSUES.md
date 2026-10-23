@@ -1,5 +1,7 @@
 # Known issues and limits
 
+2026-10-23 DigitalOcean: Shared-Droplet deployment is prepared but not executed. The user has no local SSH credentials; DigitalOcean's Web Console can provide access. Existing site/proxy configuration, available RAM/disk, domain and TLS setup are unknown. Compose is isolated under project name `opsvision` and loopback port 3100; the port must be checked on the host before deployment. No Arabic comments were found in application source; Arabic product strings and report text are intentional.
+
 - This milestone does not complete MASTER_REQUIREMENTS.md or establish production readiness.
 - Local PGlite dev/test persistence/migrations verified; Docker, PostgreSQL deployment, remote CI, stress tests and backup restore unverified. Compose/CI files provided.
 - Reporting uses bounded snapshots (200 washes); full date/branch filters, pagination and safe exports pending. Screens are not complete accounting.

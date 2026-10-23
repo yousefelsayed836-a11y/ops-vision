@@ -1885,3 +1885,5 @@ td code {
 .camera-bay-option{display:flex;align-items:center;justify-content:space-between;gap:1rem;border:1px solid #dbe8f1;border-radius:.7rem;padding:.65rem .8rem;background:#f9fcff}
 .camera-bay-option label{display:flex;align-items:center;gap:.45rem}
 .camera-bay-option input[type=number]{width:4.5rem}
+
+.hamburger-icon{display:inline-flex;flex-direction:column;gap:4px;width:20px}.hamburger-icon i{display:block;height:2px;width:20px;background:currentColor;border-radius:2px}.header-controls .push-permission{margin:0;max-width:260px}

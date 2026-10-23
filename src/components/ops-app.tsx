@@ -1257,13 +1257,13 @@ export function OpsApp({ view }: { view: string }) {
               aria-label={t("dashboard")}
               onClick={() => setMenuOpen(!menuOpen)}
             >
-              {t("menu")}
+              <span className="hamburger-icon" aria-hidden="true"><i /><i /><i /></span>
             </button>
             <span>{t("dashboard")}</span>
 
             <strong>{t(tab)}</strong>
           </div>
-          <div className="header-controls">
+          <div className="header-controls">{me && <EnablePush/>}
             {me && (isPlatform || me.memberships.length > 0) && (
               <select
                 className="organization-select"
@@ -1342,7 +1342,6 @@ export function OpsApp({ view }: { view: string }) {
           ) : (
             <>
               {['overview','reports','platformReports'].includes(tab)&&((!orgId&&canPlatform('platform.view_reports'))||(!!orgId&&!isCustomer&&(has('reports.view')||has('wash.view_sessions'))))&&<ReportDownload orgId={orgId||undefined}/>}
-              {tab==='notifications'&&<EnablePush/>}
               {tab === "overview" && (
                 <>
                   {dateControl}
@@ -2171,4 +2170,6 @@ export function OpsApp({ view }: { view: string }) {
     </div>
   );
 }
+
+
 

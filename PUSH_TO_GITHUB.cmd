@@ -1,6 +1,12 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+set "PROJECT_DIR=C:\Users\DELL\Documents\Codex\2026-10-14\new-chat\outputs\opsvision"
+cd /d "%PROJECT_DIR%"
+if not exist ".git\config" (
+  echo Cannot find the Git repository in: %PROJECT_DIR%
+  pause
+  exit /b 1
+)
 set "GIT_EXE=git"
 where git >nul 2>&1
 if errorlevel 1 (
@@ -14,13 +20,17 @@ if not exist "%GIT_EXE%" (
     exit /b 1
   )
 )
+if "%~1"=="--check" (
+  "%GIT_EXE%" -c safe.directory="%PROJECT_DIR%" rev-parse --show-toplevel
+  exit /b %errorlevel%
+)
 set "GCM_INTERACTIVE=always"
 set "GCM_CREDENTIAL_STORE=wincredman"
 echo Uploading OpsVision to GitHub...
-"%GIT_EXE%" -c http.sslBackend=openssl push -u origin main
+"%GIT_EXE%" -c safe.directory="%PROJECT_DIR%" -c http.sslBackend=openssl push -u origin main
 if errorlevel 1 (
   echo.
-  echo Upload failed. Sign in to GitHub in the browser window, then run this file again.
+  echo Upload failed. Read the error above, then run this file again after fixing it.
 ) else (
   echo.
   echo Upload complete: https://github.com/yousefelsayed836-a1ly/ops-vision

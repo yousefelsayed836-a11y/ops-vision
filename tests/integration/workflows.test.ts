@@ -11,7 +11,7 @@ let automation:typeof import('../../src/lib/automation');
 let authentication:typeof import('../../src/lib/auth');
 let cryptography:typeof import('../../src/lib/crypto');
 let customer:typeof import('../../src/lib/customer');
-let ownerScope:Scope;let admin:Actor;let orgId:string;let applicationId:string;let activationToken:string;let ownerId:string;let branchId:string;let bayId:string;let serviceId:string;let vehicleId:string;let washId:string;let password:string;
+let ownerScope:Scope;let managerScope:Scope;let admin:Actor;let orgId:string;let applicationId:string;let activationToken:string;let ownerId:string;let branchId:string;let bayId:string;let serviceId:string;let vehicleId:string;let washId:string;let password:string;
 const suffix=randomUUID().slice(0,8);
 const ownerEmail=`owner-${suffix}@example.test`;
 beforeAll(async()=>{
@@ -36,7 +36,8 @@ describe.sequential('registration → approval → activation → authenticated 
     const second=await onboarding.reviewApplication(admin,applicationId,{status:'APPROVED'});expect(second.alreadyProcessed).toBe(true);expect(second.orgId).toBe(orgId);expect(await db.invitation.count({where:{orgId,role:'OWNER'}})).toBe(1);
   });
   it('keeps raw activation secrets out of token indexes and outbox plaintext',async()=>{const invite=await db.invitation.findFirstOrThrow({where:{orgId}});const outbox=await db.outbox.findFirstOrThrow({where:{orgId}});expect(invite.tokenHash).toBe(cryptography.digest(activationToken));expect(outbox.encryptedPayload).not.toContain(activationToken);expect(outbox.status).toBe('PROVIDER_UNCONFIGURED');});
-  it('activates a new owner with hashed credentials and membership',async()=>{await onboarding.activate({token:activationToken,password});const user=await db.user.findUniqueOrThrow({where:{email:ownerEmail},include:{accounts:true}});ownerId=user.id;expect(user.accounts[0].password).not.toBe(password);ownerScope=await access.tenant({id:ownerId,platformRole:'NONE'},orgId,'tenant.manage_branches');expect(ownerScope.role).toBe('OWNER');});
+  it('activates a new owner with hashed credentials and membership',async()=>{await onboarding.activate({token:activationToken,password});const user=await db.user.findUniqueOrThrow({where:{email:ownerEmail},include:{accounts:true}});ownerId=user.id;expect(user.accounts[0].password).not.toBe(password);ownerScope=await access.tenant({id:ownerId,platformRole:'NONE'},orgId,'tenant.manage_branches');expect(ownerScope.role).toBe('OWNER');const manager=await db.user.create({data:{id:randomUUID(),name:'Test manager',email:`manager-${suffix}@example.test`,emailVerified:true,memberships:{create:{orgId,role:'MANAGER'}}}});managerScope=await access.tenant({id:manager.id,platformRole:'NONE'},orgId,'wash.create_session');expect(managerScope.role).toBe('MANAGER');});
+  it('keeps the owner read-only for wash operations',async()=>{await expect(access.tenant(ownerScope.actor,orgId,'wash.start_session')).rejects.toMatchObject({code:'FORBIDDEN'});await expect(access.tenant(ownerScope.actor,orgId,'wash.complete_session')).rejects.toMatchObject({code:'FORBIDDEN'});});
   it('prevents token replay',async()=>{await expect(onboarding.activate({token:activationToken,password})).rejects.toMatchObject({code:'INVALID_OR_EXPIRED_TOKEN'});});
   it('denies expired activation tokens',async()=>{const secret=cryptography.token();await db.invitation.create({data:{orgId,email:`expired-${suffix}@example.test`,name:'Expired',role:'WORKER',tokenHash:secret.hash,expiresAt:new Date(Date.now()-1000)}});await expect(onboarding.activate({token:secret.raw,password})).rejects.toMatchObject({code:'INVALID_OR_EXPIRED_TOKEN'});});
   it('authenticates the activated owner and creates a real session',async()=>{
@@ -52,11 +53,11 @@ describe.sequential('registration → approval → activation → authenticated 
     vehicleId=(await operations.createVehicle(ownerScope,{plate:`TEST-${suffix}`,category:'SEDAN'})).id;
   });
   it('allows only one concurrent session to claim the same bay',async()=>{
-    const input={branchId,bayId,serviceId,vehicleId};const results=await Promise.allSettled([operations.createWash(ownerScope,input),operations.createWash(ownerScope,input)]);expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(1);washId=(results.find(r=>r.status==='fulfilled') as PromiseFulfilledResult<{id:string}>).value.id;expect((await db.washBay.findUniqueOrThrow({where:{id:bayId}})).activeWashId).toBe(washId);
+    const input={branchId,bayId,serviceId,vehicleId};const results=await Promise.allSettled([operations.createWash(managerScope,input),operations.createWash(managerScope,input)]);expect(results.filter(r=>r.status==='fulfilled')).toHaveLength(1);washId=(results.find(r=>r.status==='fulfilled') as PromiseFulfilledResult<{id:string}>).value.id;expect((await db.washBay.findUniqueOrThrow({where:{id:bayId}})).activeWashId).toBe(washId);
   });
   it('preserves accepted prices after catalog changes',async()=>{await db.washService.update({where:{id:serviceId},data:{price:'200'}});expect((await db.wash.findUniqueOrThrow({where:{id:washId}})).price.toString()).toBe('125.5');});
-  it('rejects illegal state changes and stale versions',async()=>{await expect(operations.transitionWash(ownerScope,washId,'COMPLETED',0)).rejects.toMatchObject({code:'INVALID_TRANSITION'});await expect(operations.transitionWash(ownerScope,washId,'WASHING',999)).rejects.toMatchObject({code:'STALE_VERSION'});});
-  it('records start, pause, inspection and completion, then frees the bay without collecting cash',async()=>{await operations.transitionWash(ownerScope,washId,'WASHING',0);await operations.transitionWash(ownerScope,washId,'PAUSED',1);await operations.transitionWash(ownerScope,washId,'WASHING',2);await operations.transitionWash(ownerScope,washId,'INSPECTION',3);await operations.transitionWash(ownerScope,washId,'COMPLETED',4);const released=await db.washBay.findUniqueOrThrow({where:{id:bayId}});expect(released.status).toBe('AVAILABLE');expect(released.activeWashId).toBeNull();expect((await db.wash.findUniqueOrThrow({where:{id:washId}})).paymentStatus).not.toBe('PAID');expect(await db.payment.count({where:{washId}})).toBe(0);expect(await db.washHistory.count({where:{washId}})).toBe(6);});
+  it('rejects illegal state changes and stale versions',async()=>{await expect(operations.transitionWash(managerScope,washId,'COMPLETED',0)).rejects.toMatchObject({code:'INVALID_TRANSITION'});await expect(operations.transitionWash(managerScope,washId,'WASHING',999)).rejects.toMatchObject({code:'STALE_VERSION'});});
+  it('records start, pause, inspection and completion, then frees the bay without collecting cash',async()=>{await operations.transitionWash(managerScope,washId,'WASHING',0);await operations.transitionWash(managerScope,washId,'PAUSED',1);await operations.transitionWash(managerScope,washId,'WASHING',2);await operations.transitionWash(managerScope,washId,'INSPECTION',3);await operations.transitionWash(managerScope,washId,'COMPLETED',4);const released=await db.washBay.findUniqueOrThrow({where:{id:bayId}});expect(released.status).toBe('AVAILABLE');expect(released.activeWashId).toBeNull();expect((await db.wash.findUniqueOrThrow({where:{id:washId}})).paymentStatus).not.toBe('PAID');expect(await db.payment.count({where:{washId}})).toBe(0);expect(await db.washHistory.count({where:{washId}})).toBe(6);});
   it('records confirmed cash once and rejects a second receipt',async()=>{const reference=`cash-${suffix}`;const payment=await operations.recordCashPayment(ownerScope,washId,reference);expect((await operations.recordCashPayment(ownerScope,washId,reference)).id).toBe(payment.id);await expect(operations.recordCashPayment(ownerScope,washId,`another-${suffix}`)).rejects.toMatchObject({code:'ALREADY_PAID'});});
   it('does not let workers grant themselves owner privileges',async()=>{const limited={...ownerScope,role:'WORKER',permissions:['wash.view_sessions']};await expect(onboarding.inviteMember(limited,{name:'Intruder',email:`escalation-${suffix}@example.test`,role:'OWNER'})).rejects.toMatchObject({code:'FORBIDDEN'});});
   it('uses tenant-specific vehicle categories and prices without changing other tenants',async()=>{
@@ -67,13 +68,13 @@ describe.sequential('registration → approval → activation → authenticated 
     const bay=await db.washBay.create({data:{orgId,branchId,name:`Custom price ${suffix}`}});
     await catalog.saveServicePrices(ownerScope.actor,orgId,serviceId,{prices:[{category:custom.code,price:'77.00'},{category:'MOTORCYCLE',price:'30.00'},{category:'BICYCLE',price:'20.00'}]});
     const vehicle=await operations.createVehicle(ownerScope,{plate:`CUSTOM-${suffix}`,category:custom.code});
-    const wash=await operations.createWash(ownerScope,{branchId,bayId:bay.id,serviceId,vehicleId:vehicle.id},true);
+    const wash=await operations.createWash(managerScope,{branchId,bayId:bay.id,serviceId,vehicleId:vehicle.id},true);
     expect(wash.price.toString()).toBe('77');
-    await operations.transitionWash(ownerScope,wash.id,'COMPLETED',0);
+    await operations.transitionWash(managerScope,wash.id,'COMPLETED',0);
     const other=await db.organization.create({data:{name:'Pricing isolation',slug:`price-other-${suffix}`}});
     await expect(operations.createVehicle({...ownerScope,orgId:other.id},{plate:`OTHER-${suffix}`,category:custom.code})).rejects.toMatchObject({code:'INVALID_CATEGORY'});
   });
-  it('rejects cross-tenant service references',async()=>{const another=await db.organization.create({data:{name:'Isolated service org',slug:`service-other-${suffix}`}});const service=await db.washService.create({data:{orgId:another.id,nameAr:'خدمة أخرى',nameEn:'Other service',price:'50',durationMinutes:10}});await expect(operations.createWash(ownerScope,{branchId,serviceId:service.id,vehicleId})).rejects.toMatchObject({code:'NOT_FOUND'});});
+  it('rejects cross-tenant service references',async()=>{const another=await db.organization.create({data:{name:'Isolated service org',slug:`service-other-${suffix}`}});const service=await db.washService.create({data:{orgId:another.id,nameAr:'خدمة أخرى',nameEn:'Other service',price:'50',durationMinutes:10}});await expect(operations.createWash(managerScope,{branchId,serviceId:service.id,vehicleId})).rejects.toMatchObject({code:'NOT_FOUND'});});
   it('suspending an organization immediately denies access',async()=>{await db.organization.update({where:{id:orgId},data:{status:'SUSPENDED'}});await expect(access.tenant(ownerScope.actor,orgId,'wash.view_sessions')).rejects.toMatchObject({code:'FORBIDDEN'});await db.organization.update({where:{id:orgId},data:{status:'ACTIVE'}});});
 });
 describe.sequential('isolated AI simulation and durable automation',()=>{
@@ -105,7 +106,7 @@ describe.sequential('customer booking, pricing, receipt and feedback',()=>{
   it('does not permit customer discounts or manual walk-in creation',async()=>{await expect(operations.createWash(scope,{branchId,bayId,serviceId,vehicleId:customerVehicleId,bookedFor:new Date(start.getTime()+3600000).toISOString(),discount:'10'})).rejects.toMatchObject({code:'FORBIDDEN'});await expect(operations.createWash(scope,{branchId,bayId,serviceId,vehicleId:customerVehicleId})).rejects.toMatchObject({code:'BOOKING_REQUIRED'});});
   it('enforces the configured cancellation window',async()=>{await db.organization.update({where:{id:orgId},data:{cancellationLeadHours:72}});await expect(operations.transitionWash(scope,bookingId,'CANCELLED',0)).rejects.toMatchObject({code:'CANCELLATION_WINDOW_CLOSED'});await db.organization.update({where:{id:orgId},data:{cancellationLeadHours:1}});await operations.transitionWash(scope,bookingId,'CANCELLED',0);expect((await db.wash.findUniqueOrThrow({where:{id:bookingId}})).status).toBe('CANCELLED');});
   it('limits feedback to completed owned sessions',async()=>{const another=await operations.createWash(scope,{branchId,bayId,serviceId,vehicleId:customerVehicleId,bookedFor:start.toISOString()});bookingId=another.id;await expect(customer.feedback(scope,bookingId,{rating:5,comment:'Good'})).rejects.toMatchObject({code:'SESSION_NOT_COMPLETED'});await expect(customer.receipt(scope,bookingId)).rejects.toMatchObject({code:'RECEIPT_UNAVAILABLE'});});
-  it('checks in a reservation then permits an actual paid receipt and rating',async()=>{await operations.transitionWash(ownerScope,bookingId,'CHECKED_IN',0);await operations.transitionWash(ownerScope,bookingId,'ASSIGNED',1);await operations.transitionWash(ownerScope,bookingId,'WASHING',2);await operations.transitionWash(ownerScope,bookingId,'INSPECTION',3);await operations.transitionWash(ownerScope,bookingId,'COMPLETED',4);await operations.recordCashPayment(ownerScope,bookingId,`customer-cash-${suffix}`);const receipt=await customer.receipt(scope,bookingId);expect(receipt.total).toBe('114');expect(receipt.tax).toBe('14');expect(receipt.status).toBe('PAID');await customer.feedback(scope,bookingId,{rating:5,comment:'Test feedback'});expect((await db.feedback.findUniqueOrThrow({where:{washId:bookingId}})).rating).toBe(5);});
+  it('checks in a reservation then permits an actual paid receipt and rating',async()=>{await operations.transitionWash(managerScope,bookingId,'CHECKED_IN',0);await operations.transitionWash(managerScope,bookingId,'ASSIGNED',1);await operations.transitionWash(managerScope,bookingId,'WASHING',2);await operations.transitionWash(managerScope,bookingId,'INSPECTION',3);await operations.transitionWash(managerScope,bookingId,'COMPLETED',4);await operations.recordCashPayment(ownerScope,bookingId,`customer-cash-${suffix}`);const receipt=await customer.receipt(scope,bookingId);expect(receipt.total).toBe('114');expect(receipt.tax).toBe('14');expect(receipt.status).toBe('PAID');await customer.feedback(scope,bookingId,{rating:5,comment:'Test feedback'});expect((await db.feedback.findUniqueOrThrow({where:{washId:bookingId}})).rating).toBe(5);});
   it('does not expose another customer receipt',async()=>{await expect(customer.receipt({...scope,actor:{id:randomUUID(),platformRole:'NONE'}},bookingId)).rejects.toMatchObject({code:'FORBIDDEN'});});
 });
 describe.sequential('password recovery and platform alerts',()=>{
@@ -230,26 +231,26 @@ describe.sequential('simplified operations, camera IP, customers and daily stati
   await expect(bays.saveCameraIp(ownerScope,{bayId:currentBay,ipAddress:'https://camera.example'})).rejects.toBeTruthy();
  });
  it('starts directly, blocks conflicting starts and prevents changing occupied bay status',async()=>{
-  const result=await quick.quickWash(ownerScope,{branchId,bayId:currentBay,serviceId,vehicle:{plate:'QUICK-'+suffix,category:'SEDAN',size:'MEDIUM'},startNow:true});quickId=result.id;
+  const result=await quick.quickWash(managerScope,{branchId,bayId:currentBay,serviceId,vehicle:{plate:'QUICK-'+suffix,category:'SEDAN',size:'MEDIUM'},startNow:true});quickId=result.id;
   expect(result.status).toBe('WASHING');expect(result.startedAt).toBeTruthy();
-  await expect(quick.quickWash(ownerScope,{branchId,bayId:currentBay,serviceId,vehicle:{plate:'QUICK-'+suffix,category:'SEDAN',size:'MEDIUM'},startNow:true})).rejects.toMatchObject({code:'BAY_UNAVAILABLE'});
+  await expect(quick.quickWash(managerScope,{branchId,bayId:currentBay,serviceId,vehicle:{plate:'QUICK-'+suffix,category:'SEDAN',size:'MEDIUM'},startNow:true})).rejects.toMatchObject({code:'BAY_UNAVAILABLE'});
   await expect(bays.updateBay(ownerScope,currentBay,{status:'MAINTENANCE'})).rejects.toMatchObject({code:'BAY_OCCUPIED'});
   await bays.updateBay(ownerScope,currentBay,{name:'Renamed occupied bay'});
  });
  it('finishes directly once, releases the bay and records actual history without invented inspection',async()=>{
-  await operations.transitionWash(ownerScope,quickId,'COMPLETED',0);
+  await operations.transitionWash(managerScope,quickId,'COMPLETED',0);
   expect(await db.washBay.findUniqueOrThrow({where:{id:currentBay}})).toMatchObject({status:'AVAILABLE',activeWashId:null});
   expect((await db.washHistory.findMany({where:{washId:quickId}})).some(h=>h.toStatus==='INSPECTION')).toBe(false);
-  await expect(operations.transitionWash(ownerScope,quickId,'COMPLETED',0)).rejects.toMatchObject({code:'INVALID_TRANSITION'});expect(await db.washHistory.count({where:{washId:quickId,toStatus:'COMPLETED'}})).toBe(1);
+  await expect(operations.transitionWash(managerScope,quickId,'COMPLETED',0)).rejects.toMatchObject({code:'INVALID_TRANSITION'});expect(await db.washHistory.count({where:{washId:quickId,toStatus:'COMPLETED'}})).toBe(1);
   await bays.updateBay(ownerScope,currentBay,{status:'MAINTENANCE'});await bays.updateBay(ownerScope,currentBay,{status:'AVAILABLE'});
  });
  it('creates a contact without a new password and keeps directories inside tenant/branch',async()=>{
-  const result=await clients.quickCustomer(ownerScope,{name:'Quick test customer',phone:'+20 101 234 5678',bayId:currentBay,serviceId,category:'SEDAN'});quickId=result.washId;
+  const result=await clients.quickCustomer(managerScope,{name:'Quick test customer',phone:'+20 101 234 5678',bayId:currentBay,serviceId,category:'SEDAN'});quickId=result.washId;
   expect(result).not.toHaveProperty('password');const directory=await clients.listWashCustomers(ownerScope);const profile=directory.find(c=>c.id===result.customerId);expect(profile?.phone).toBe('+201012345678');expect(profile?.washes.some(w=>w.id===quickId)).toBe(true);
   expect(await clients.listWashCustomers({...ownerScope,orgId:randomUUID()})).toEqual([]);expect(await clients.listWashCustomers({...ownerScope,branchId:secondBranch})).toEqual([]);
   await expect(clients.listWashCustomers({...ownerScope,permissions:[]})).rejects.toMatchObject({code:'FORBIDDEN'});
   const reissued=await clients.quickCustomer({...ownerScope,permissions:['tenant.manage_customers']},{name:'Quick test customer',phone:'+201012345678',bayId:currentBay,category:'SEDAN'});expect(reissued.customerId).toBe(result.customerId);
-  await expect(clients.quickCustomer(ownerScope,{name:'Different customer',phone:'+201099999999',bayId:currentBay,category:'SEDAN'})).rejects.toMatchObject({code:'CUSTOMER_ALREADY_LINKED'});
+  await expect(clients.quickCustomer(managerScope,{name:'Different customer',phone:'+201099999999',bayId:currentBay,category:'SEDAN'})).rejects.toMatchObject({code:'CUSTOMER_ALREADY_LINKED'});
  });
  it('publishes only the selected bay and safe wash details on the permanent link',async()=>{
   const publicTracking=await import('../../src/lib/public-bay-tracking');
@@ -265,9 +266,9 @@ describe.sequential('simplified operations, camera IP, customers and daily stati
   await expect(publicTracking.publicBayStatus('other-org',currentBay)).rejects.toMatchObject({code:'NOT_FOUND'});
  });
  it('claims a chosen bay on one-click start for a waiting session',async()=>{
-  const free=await bays.createBay(ownerScope,{branchId,name:'Wait start '+suffix});const wash=await operations.createWash(ownerScope,{branchId,serviceId,vehicleId});expect(wash.bayId).toBeNull();
-  await operations.transitionWash(ownerScope,wash.id,'WASHING',0,free.id);expect((await db.washBay.findUniqueOrThrow({where:{id:free.id}})).activeWashId).toBe(wash.id);
-  await operations.transitionWash(ownerScope,wash.id,'COMPLETED',1);
+  const free=await bays.createBay(ownerScope,{branchId,name:'Wait start '+suffix});const wash=await operations.createWash(managerScope,{branchId,serviceId,vehicleId});expect(wash.bayId).toBeNull();
+  await operations.transitionWash(managerScope,wash.id,'WASHING',0,free.id);expect((await db.washBay.findUniqueOrThrow({where:{id:free.id}})).activeWashId).toBe(wash.id);
+  await operations.transitionWash(managerScope,wash.id,'COMPLETED',1);
  });
  it('reports real day boundaries with no finance leakage and no snapshot cap',async()=>{
   const date='2024-01-15';await db.wash.update({where:{id:quickId},data:{createdAt:new Date('2024-01-15T12:00:00Z')}});
@@ -288,7 +289,7 @@ describe.sequential('camera analysis configuration and forms without vehicle siz
  it('supports a new wash with omitted size and preserves a known vehicle internally',async()=>{
   const quick=await import('../../src/lib/quick-wash');const bay=await db.washBay.create({data:{orgId,branchId,name:'No size bay '+suffix}});
   const vehicle=await operations.createVehicle(ownerScope,{plate:'NO-SIZE-'+suffix,category:'SUV',size:'LARGE'});
-  const result=await quick.quickWash(ownerScope,{branchId,bayId:bay.id,serviceId,vehicle:{plate:vehicle.plate,category:'SUV'},startNow:true});expect(result.vehicleId).toBe(vehicle.id);expect(result.status).toBe('WASHING');await operations.transitionWash(ownerScope,result.id,'COMPLETED',0);const clients=await import('../../src/lib/wash-customers');const contact=await clients.quickCustomer(ownerScope,{name:'No size contact',phone:'+201011122233',bayId:bay.id,serviceId,plate:vehicle.plate,category:'SUV'});expect(contact.washId).toBeTruthy();
+  const result=await quick.quickWash(managerScope,{branchId,bayId:bay.id,serviceId,vehicle:{plate:vehicle.plate,category:'SUV'},startNow:true});expect(result.vehicleId).toBe(vehicle.id);expect(result.status).toBe('WASHING');await operations.transitionWash(managerScope,result.id,'COMPLETED',0);const clients=await import('../../src/lib/wash-customers');const contact=await clients.quickCustomer(managerScope,{name:'No size contact',phone:'+201011122233',bayId:bay.id,serviceId,plate:vehicle.plate,category:'SUV'});expect(contact.washId).toBeTruthy();
  });
  it('validates image orientation, sampling and same-branch bay/camera configuration',async()=>{
   const video=await import('../../src/lib/video-analysis');expect(video.videoConfig.parse({branchId,rotation:270,sampleFps:.5}).rotation).toBe(270);expect(video.videoConfig.safeParse({branchId,rotation:45}).success).toBe(false);expect(video.videoConfig.safeParse({branchId,zone:{x:.9,y:0,width:.5,height:1}}).success).toBe(false);
@@ -328,8 +329,8 @@ describe.sequential('camera visits persist entry and exit independently from fin
  });
  it('isolates org/branch/grants and labels staff confirmation explicitly',async()=>{
   const visits=await import('../../src/lib/camera-visits');await expect(visits.listCameraVisits({...ownerScope,permissions:[]})).rejects.toMatchObject({code:'FORBIDDEN'});expect(await visits.listCameraVisits({...ownerScope,branchId:randomUUID()})).toEqual([]);expect(await visits.listCameraVisits({...ownerScope,orgId:randomUUID()})).toEqual([]);
-  await expect(visits.reviewCameraVisit({...ownerScope,permissions:['wash.view_sessions']},visitId,{category:'SUV',washed:true})).rejects.toMatchObject({code:'FORBIDDEN'});await expect(visits.reviewCameraVisit({...ownerScope,branchId:randomUUID()},visitId,{category:'SUV',washed:true})).rejects.toMatchObject({code:'NOT_FOUND'});
-  await visits.reviewCameraVisit(ownerScope,visitId,{category:'FULL_SIZE_SUV',washed:true});expect(await db.cameraVisit.findUniqueOrThrow({where:{id:visitId}})).toMatchObject({category:'FULL_SIZE_SUV',categorySource:'HUMAN_REVIEW',washStatus:'CONFIRMED',reviewedBy:ownerId});
+  await expect(visits.reviewCameraVisit({...ownerScope,permissions:['wash.view_sessions']},visitId,{category:'SUV',washed:true})).rejects.toMatchObject({code:'FORBIDDEN'});await expect(visits.reviewCameraVisit({...managerScope,branchId:randomUUID()},visitId,{category:'SUV',washed:true})).rejects.toMatchObject({code:'NOT_FOUND'});
+  await visits.reviewCameraVisit(managerScope,visitId,{category:'FULL_SIZE_SUV',washed:true});expect(await db.cameraVisit.findUniqueOrThrow({where:{id:visitId}})).toMatchObject({category:'FULL_SIZE_SUV',categorySource:'HUMAN_REVIEW',washStatus:'CONFIRMED',reviewedBy:managerScope.actor.id});
  });
  it('rejects a bay assigned to another organization or camera',async()=>{
   const {emitCameraGateEvents}=await import('../../src/lib/camera-events');const {transaction}=await import('../../src/lib/transactions');await expect(transaction(tx=>emitCameraGateEvents(tx,{...job,config:{bayId:randomUUID()}},makeReport([{type:'vehicle.entered_bay',videoSeconds:5,confirmedAtSeconds:6,confidence:.7}])))).rejects.toMatchObject({code:'INVALID_CAMERA_BAY'});
@@ -341,7 +342,7 @@ describe.sequential('three-category AI evidence and human correction',()=>{
   const {emitCameraGateEvents}=await import('../../src/lib/camera-events');const {transaction}=await import('../../src/lib/transactions');const {reviewCameraVisit}=await import('../../src/lib/camera-visits');const job={id:randomUUID(),orgId,branchId,cameraId:null,sourceSha256:randomBytes(32).toString('hex'),config:{bayId}};
   const report={video:{durationSeconds:100},tracks:[],automation:{engine:'BAY_GATE_V1',cycles:[{entrySeconds:5,classification:{category:'FULL_SIZE_SUV',source:'AI_VISUAL',similarity:.6,margin:.04,requiresReview:true,meaning:'BODY_SHAPE_NOT_DRIVETRAIN'}}],events:[{type:'vehicle.entered_bay',videoSeconds:5,confirmedAtSeconds:6,confidence:.7},{type:'vehicle.exited_bay',videoSeconds:95,confirmedAtSeconds:96,confidence:.8}]}} as unknown as import('../../src/lib/video-analysis').VideoReport;
   await transaction(tx=>emitCameraGateEvents(tx,job,report));let row=await db.cameraVisit.findFirstOrThrow({where:{orgId,analysisId:job.id}});expect(row).toMatchObject({category:'FULL_SIZE_SUV',categorySource:'AI_VISUAL',washStatus:'UNCONFIRMED'});expect(row.categoryEvidence).toMatchObject({similarity:.6,requiresReview:true});
-  await reviewCameraVisit(ownerScope,row.id,{category:'SUV',washed:true});await transaction(tx=>emitCameraGateEvents(tx,job,report));row=await db.cameraVisit.findUniqueOrThrow({where:{id:row.id}});expect(row).toMatchObject({category:'SUV',categorySource:'HUMAN_REVIEW',washStatus:'CONFIRMED'});
+  await reviewCameraVisit(managerScope,row.id,{category:'SUV',washed:true});await transaction(tx=>emitCameraGateEvents(tx,job,report));row=await db.cameraVisit.findUniqueOrThrow({where:{id:row.id}});expect(row).toMatchObject({category:'SUV',categorySource:'HUMAN_REVIEW',washStatus:'CONFIRMED'});
  });
  it('accepts built-in vehicle categories and validates custom category codes',async()=>{
   const {vehicleInput}=await import('../../src/lib/validation');for(const category of ['SEDAN','SUV','FULL_SIZE_SUV','MOTORCYCLE','BICYCLE','CUSTOM_ABC123'])expect(vehicleInput.safeParse({plate:'TYPE-TEST',category}).success).toBe(true);expect(vehicleInput.safeParse({plate:'TYPE-TEST',category:'bad category'}).success).toBe(false);

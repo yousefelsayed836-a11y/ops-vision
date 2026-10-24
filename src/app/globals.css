@@ -1893,3 +1893,5 @@ td code {
 .compact-active-wash{display:grid;grid-template-columns:76px 1fr;align-items:center;gap:10px;padding:10px}.compact-active-wash .dashboard-bay-car{width:76px;height:42px;object-fit:contain}.active-wash-summary{display:grid;gap:3px;font-size:13px}.active-wash-summary span{color:var(--muted)}.compact-active-wash .wash-activity{grid-column:1/-1;margin-top:4px;padding-top:8px}.compact-active-wash .wash-activity-time{justify-content:space-between;gap:8px}.compact-active-wash .wash-time-controls{justify-content:center;gap:6px}.compact-active-wash .wash-time-controls .button-row{display:flex;gap:4px}.compact-active-wash .wash-time-controls .button{font-size:12px;padding:6px 8px}
 
 .wash-card{display:grid;gap:10px}.wash-card-car{width:120px;height:58px;object-fit:contain;align-self:center}.wash-card .wash-timing{display:none}.wash-card .wash-activity{margin-top:4px}
+
+.wash-overdue{border:2px solid #c94b5b;background:#fff0f2;border-radius:10px;padding:10px}.management-active-wash:has(.wash-overdue){background:#ffe3e7;border:2px solid #c94b5b}

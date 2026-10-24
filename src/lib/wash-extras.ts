@@ -7,7 +7,7 @@ import {transaction,audit} from './transactions';
 
 const active=['ASSIGNED','WASHING','PAUSED','INSPECTION'];
 export async function adjustWashMinutes(scope:Scope,id:string,raw:unknown){
- const {deltaSeconds}=z.object({deltaSeconds:z.number().int().refine(value=>value!==0&&Math.abs(value)<=7200&&value%30===0)}).parse(raw);
+ const {deltaSeconds}=z.object({deltaSeconds:z.number().int().refine(value=>value!==0&&Math.abs(value)<=7200&&value%10===0)}).parse(raw);
  assert(scope.permissions.includes('wash.start_session'),'FORBIDDEN',403);
  return transaction(async tx=>{
   const wash=await tx.wash.findFirst({where:{id,orgId:scope.orgId}});assert(wash,'NOT_FOUND',404);branchScope(scope,wash.branchId);
@@ -105,4 +105,5 @@ export async function sendOwnerMessage(scope:Scope,raw:unknown){
   return {id:notice.id};
  });
 }
+
 

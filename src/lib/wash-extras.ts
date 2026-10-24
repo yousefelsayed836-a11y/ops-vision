@@ -25,6 +25,7 @@ export async function addWashExtraService(scope:Scope,id:string,raw:unknown){
   const wash=await tx.wash.findFirst({where:{id,orgId:scope.orgId},include:{vehicle:true}});assert(wash,'NOT_FOUND',404);branchScope(scope,wash.branchId);
   assert(['WASHING','PAUSED','INSPECTION'].includes(wash.status),'WASH_NOT_ACTIVE',409);
   assert(wash.paymentStatus==='UNPAID','PAYMENT_ALREADY_RECORDED',409);
+  assert(!(await tx.washExtraService.findFirst({where:{washId:id,serviceId,orgId:scope.orgId}})),'SERVICE_ALREADY_ADDED',409);
   const service=await tx.washService.findFirst({where:{id:serviceId,orgId:scope.orgId,active:true}});assert(service,'NOT_FOUND',404);
   assert(service.category==='ALL'||service.category===wash.vehicle.category,'SERVICE_CATEGORY_MISMATCH',422);
   const rules=await tx.servicePricingRule.findMany({where:{orgId:scope.orgId,serviceId,category:{in:[wash.vehicle.category,'ALL']},size:{in:[wash.vehicle.size,'ALL']}}});

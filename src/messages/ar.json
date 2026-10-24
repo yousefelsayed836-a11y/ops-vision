@@ -581,7 +581,7 @@
     "manual": "اتبع الخطوات التالية في متصفح الجهاز.",
     "remote": "على جهاز آخر، افتح رابط الموقع الآمن HTTPS؛ عنوان localhost يعمل على الكمبيوتر الحالي فقط."
   },
-  "washActivity": {"elapsed":"الوقت من بداية الغسيل","estimated":"الوقت المتوقع","minutes":"دقيقة","minus":"نقص","plus":"زود","tenSeconds":"١٠ ثواني","halfMinute":"٣٠ ثانية","oneMinute":"دقيقة","stepMinutes":"{count} دقيقة","customMinutes":"مدة أخرى بالدقائق (حتى ١٢٠)","comment":"تعليق لمدير النظام","send":"إرسال التعليق","commentSent":"وصل التعليق لمدير النظام.","saveError":"تعذر الحفظ. حاول مرة أخرى."},
+  "washActivity": {"elapsed":"الوقت من بداية الغسيل","remaining":"الوقت المتبقي","estimated":"الوقت المتوقع","minutes":"دقيقة","minus":"نقص","plus":"زود","tenSeconds":"١٠ ثواني","halfMinute":"٣٠ ثانية","oneMinute":"دقيقة","stepMinutes":"{count} دقيقة","customMinutes":"مدة أخرى بالدقائق (حتى ١٢٠)","comment":"تعليق لمدير النظام","send":"إرسال التعليق","commentSent":"وصل التعليق لمدير النظام.","saveError":"تعذر الحفظ. حاول مرة أخرى."},
   "accountAdmin": {"title":"إدارة بيانات الحسابات","help":"تغيير البريد أو كلمة المرور يلغي جلسات الحساب الحالية. اترك كلمة المرور فارغة للإبقاء عليها.","search":"بحث عن حساب","email":"البريد الإلكتروني","newPassword":"كلمة مرور جديدة","leavePassword":"اتركها فارغة إذا لم تتغير","save":"حفظ البيانات","saved":"تم تحديث الحساب. قد يلزم تسجيل الدخول مجددًا.","error":"تعذر تحديث الحساب.","platformOwner":"مدير النظام"},
   "contactPlatform":"رسالة لإدارة النظام","sendOwnerMessage":"إرسال الرسالة","ownerMessage":"رسالة من صاحب المغسلة","messageSent":"تم إرسال الرسالة","chooseServices":"اختار الخدمات الإضافية","saveDiscount":"حفظ الخصم","discountAmount":"قيمة الخصم بالريال",
   "removeExtraService":"حذف الخدمة","ownerMessageBody":"اكتب رسالتك",

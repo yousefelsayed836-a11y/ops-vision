@@ -1,3 +1,11 @@
+import {randomUUID} from 'node:crypto';
+import {z} from 'zod';
+import {Prisma} from '@/generated/prisma/client';
+import {assert} from './errors';
+import {branchScope,type Scope} from './access';
+import {transaction,audit} from './transactions';
+
+const active=['ASSIGNED','WASHING','PAUSED','INSPECTION'];
 export async function adjustWashMinutes(scope:Scope,id:string,raw:unknown){
  const {deltaSeconds}=z.object({deltaSeconds:z.number().int().refine(value=>value!==0&&Math.abs(value)<=7200&&value%10===0)}).parse(raw);
  assert(scope.permissions.includes('wash.start_session'),'FORBIDDEN',403);

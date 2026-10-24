@@ -1,4 +1,7 @@
 "use client";
+
+  const initialOrgSelection = useRef(new Set<string>());
+"use client";
 import {washCatalog,vehicleCategoryLabel,vehicleCategories} from "@/lib/catalog";
 import {saudiDateTime} from "@/lib/saudi-time";
 import {PlatformBays} from "./platform-bays";
@@ -355,6 +358,7 @@ export function OpsApp({ view }: { view: string }) {
   const [platformData, setPlatformData] = useState<PlatformData | null>(null);
   const [tab, setTab] = useState("organizations");
   const [loading, setLoading] = useState(view === "dashboard");
+  const initialOrgSelection = useRef(new Set<string>());
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<{ text: string; error: boolean } | null>(
     null,
@@ -403,7 +407,7 @@ export function OpsApp({ view }: { view: string }) {
     async (selected: string) => {
       try {
         if (selected) {
-          const snapshot=await api<Snapshot>(`tenants/${selected}/snapshot`); setData(snapshot); setPlatformData(null); if(snapshot.role!=="CUSTOMER") setTab(snapshot.permissions.includes("wash.view_sessions")?"operations":"branches");
+          const snapshot=await api<Snapshot>(`tenants/${selected}/snapshot`); setData(snapshot); setPlatformData(null); if(snapshot.role!=="CUSTOMER"&&!initialOrgSelection.current.has(selected)){initialOrgSelection.current.add(selected);setTab(snapshot.permissions.includes("wash.view_sessions")?"operations":"branches");}
         } else {
           setPlatformData(await api<PlatformData>("platform"));
           setData(null);

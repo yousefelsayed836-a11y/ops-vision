@@ -382,6 +382,7 @@ export function OpsApp({ view }: { view: string }) {
     !!me && ["SUPER_ADMIN", "PLATFORM_ADMIN"].includes(me.user.platformRole);
   const isCustomer = data?.role === "CUSTOMER";
   const has = (permission: string) => !(data?.role==='OWNER'&&permission.startsWith('wash.')&&permission!=='wash.view_sessions')&&!!data?.permissions.includes(permission);
+  const manageServices = () => has('tenant.manage_services') || has('wash.manage_services');
   const state = (value: string) =>
     t.has(`states.${value}`) ? t(`states.${value}`) : value;
   const statsAllowed=!!data&&!isCustomer&&['wash.view_sessions','reports.view','finance.view_revenue'].some(p=>data.permissions.includes(p));
@@ -903,7 +904,7 @@ export function OpsApp({ view }: { view: string }) {
             ...(has("tenant.manage_branches") || has("tenant.manage_bays")
               ? ["branches"]
               : []),
-            ...(has("tenant.manage_services") ? ["services"] : []),
+            ...(manageServices() ? ["services"] : []),
             ...(has("tenant.manage_employees") ? ["team"] : []),
             ...(has("tenant.manage_cameras") ? ["cameraIp"] : []),
             ...(has("tenant.manage_customers") ? ["washCustomers"] : []),
@@ -1296,7 +1297,7 @@ export function OpsApp({ view }: { view: string }) {
                 {t("newWash")}
               </button>
             )}
-            {tab === "overview" && has("tenant.manage_services") && (
+            {tab === "overview" && manageServices() && (
               <button className="button outline" onClick={serviceForm}>
                 {t("newService")}
               </button>
@@ -1619,14 +1620,14 @@ export function OpsApp({ view }: { view: string }) {
                 <>
                   <div className="section-title">
                     <h2>{t("services")}</h2>
-                    {has("tenant.manage_services") && (<div className="button-row"><button className="button outline" onClick={()=>openForm('newVehicleCategory',[field('nameAr'),field('nameEn')],'vehicle-categories')}>{t('newVehicleCategory')}</button>
+                    {manageServices() && (<div className="button-row"><button className="button outline" onClick={()=>openForm('newVehicleCategory',[field('nameAr'),field('nameEn')],'vehicle-categories')}>{t('newVehicleCategory')}</button>
                       <button className="button primary" onClick={serviceForm}>
                         {t("newService")}
                       </button>
                     </div>)}
                   </div>
-                  {has("tenant.manage_services")&&<div className="panel"><h3>{t('catalogTitle')}</h3><p className="muted">{t('catalogHelp')}</p><div className="button-row">{washCatalog.map(item=><button key={item.ar} className="button outline compact" onClick={()=>openForm('newService',[{...field('nameAr'),default:item.ar},{...field('nameEn'),default:item.en},{...field('price','number'),min:0,step:'0.01'},{...field('duration','number'),name:'durationMinutes',min:1,max:1440}],'services',v=>({...v,category:'ALL'}))}>{locale==='ar'?item.ar:item.en}</button>)}</div></div>}
-                  {has('tenant.manage_services')&&data.vehicleCategories.some(item=>item.code.startsWith('CUSTOM_'))&&<div className="panel"><h3>{t('vehicleCategories')}</h3><div className="button-row">{data.vehicleCategories.filter(item=>item.code.startsWith('CUSTOM_')).map(item=><span className="badge" key={item.code}>{locale==='ar'?item.nameAr:item.nameEn}<button type="button" className="text-button danger" onClick={()=>{if(window.confirm(t('confirm'))){void run(()=>api(`tenants/${orgId}/vehicle-categories/${item.code}`,'DELETE',{}));}}}>{t('remove')}</button></span>)}</div></div>}
+                  {manageServices()&&<div className="panel"><h3>{t('catalogTitle')}</h3><p className="muted">{t('catalogHelp')}</p><div className="button-row">{washCatalog.map(item=><button key={item.ar} className="button outline compact" onClick={()=>openForm('newService',[{...field('nameAr'),default:item.ar},{...field('nameEn'),default:item.en},{...field('price','number'),min:0,step:'0.01'},{...field('duration','number'),name:'durationMinutes',min:1,max:1440}],'services',v=>({...v,category:'ALL'}))}>{locale==='ar'?item.ar:item.en}</button>)}</div></div>}
+                  {manageServices()&&data.vehicleCategories.some(item=>item.code.startsWith('CUSTOM_'))&&<div className="panel"><h3>{t('vehicleCategories')}</h3><div className="button-row">{data.vehicleCategories.filter(item=>item.code.startsWith('CUSTOM_')).map(item=><span className="badge" key={item.code}>{locale==='ar'?item.nameAr:item.nameEn}<button type="button" className="text-button danger" onClick={()=>{if(window.confirm(t('confirm'))){void run(()=>api(`tenants/${orgId}/vehicle-categories/${item.code}`,'DELETE',{}));}}}>{t('remove')}</button></span>)}</div></div>}
                   <div className="service-grid">
                     {data.services.map((service) => (
                       <article className="panel service-card" key={service.id}>
@@ -1643,7 +1644,7 @@ export function OpsApp({ view }: { view: string }) {
                           {service.durationMinutes}{" "}
                           {locale === "ar" ? "دقيقة" : "minutes"}
                         </small>
-                        {has("tenant.manage_services") && (
+                        {manageServices() && (
                           <button
                             className="text-button"
                             onClick={() => {
@@ -1670,8 +1671,8 @@ export function OpsApp({ view }: { view: string }) {
                             {t("price")}
                           </button>
                         )}
-                        {has('tenant.manage_services')&&<button className="button outline compact danger" onClick={()=>{if(window.confirm(t('confirm'))){void run(()=>api(`tenants/${orgId}/services/${service.id}`,'DELETE',{}));}}}>{t('removeExtraService')}</button>}
-                        {has('tenant.manage_services')&&<ServicePricingEditor key={`${service.id}-${service.pricingRules.length}`} basePrice={service.price} baseDuration={service.durationMinutes} rules={service.pricingRules} custom={data.vehicleCategories} serviceCategory={service.category} onSave={async prices=>{await api(`tenants/${orgId}/services/${service.id}/prices`,'POST',{prices});await refresh();}}/>}
+                        {manageServices()&&<button className="button outline compact danger" onClick={()=>{if(window.confirm(t('confirm'))){void run(()=>api(`tenants/${orgId}/services/${service.id}`,'DELETE',{}));}}}>{t('removeExtraService')}</button>}
+                        {manageServices()&&<ServicePricingEditor key={`${service.id}-${service.pricingRules.length}`} basePrice={service.price} baseDuration={service.durationMinutes} rules={service.pricingRules} custom={data.vehicleCategories} serviceCategory={service.category} onSave={async prices=>{await api(`tenants/${orgId}/services/${service.id}/prices`,'POST',{prices});await refresh();}}/>}
                       </article>
                     ))}
                   </div>
@@ -1747,8 +1748,8 @@ export function OpsApp({ view }: { view: string }) {
                           </div>
                         </div>
                         <WashActivity washId={w.id} orgId={orgId} startedAt={w.startedAt} completedAt={w.completedAt} status={w.status} estimatedMinutes={w.estimatedMinutes} timeAdjustmentSeconds={w.timeAdjustmentSeconds} canAdjust={has('wash.start_session')} canComment={!isCustomer&&data.role!=='OWNER'&&has('wash.view_sessions')} onChanged={refresh}/>
-                        {w.extraServices?.map(extra=><p className="muted" key={extra.id}>{t('extraService')}: {locale==='ar'?extra.nameAr:extra.nameEn} · {extra.durationMinutes} {t('reportMinutes')} {has('tenant.manage_services')&&['WASHING','PAUSED','INSPECTION'].includes(w.status)&&<button type="button" className="text-button" disabled={busy} onClick={()=>void run(()=>api(`tenants/${orgId}/washes/${w.id}/extra-services/${extra.id}`,'DELETE',{}))}>{t('removeExtraService')}</button>}</p>)}
-                        {has('tenant.manage_services')&&['WASHING','PAUSED','INSPECTION'].includes(w.status)&&<div><button type="button" className="text-button" onClick={serviceForm}>{t('newService')}</button><form className="form-fields" onSubmit={event=>{event.preventDefault();const form=event.currentTarget;const serviceIds=new FormData(form).getAll('serviceId').map(String);if(!serviceIds.length)return;void run(async()=>{for(const serviceId of serviceIds)await api(`tenants/${orgId}/washes/${w.id}/extra-services`,'POST',{serviceId});form.reset();});}}><fieldset className="field"><legend>{t('chooseServices')}</legend>{data.services.filter(service=>service.active&&!w.extraServices?.some(extra=>extra.id===service.id)&&(service.category==='ALL'||service.category===w.vehicle.category)).map(service=><label key={service.id} className="checkbox-row"><input type="checkbox" name="serviceId" value={service.id}/>{locale==='ar'?service.nameAr:service.nameEn} · {money(service.price,data.org.currency)}</label>)}</fieldset><button className="button outline compact" disabled={busy}>{t('addExtraService')}</button></form></div>}
+                        {w.extraServices?.map(extra=><p className="muted" key={extra.id}>{t('extraService')}: {locale==='ar'?extra.nameAr:extra.nameEn} · {extra.durationMinutes} {t('reportMinutes')} {manageServices()&&['WASHING','PAUSED','INSPECTION'].includes(w.status)&&<button type="button" className="text-button" disabled={busy} onClick={()=>void run(()=>api(`tenants/${orgId}/washes/${w.id}/extra-services/${extra.id}`,'DELETE',{}))}>{t('removeExtraService')}</button>}</p>)}
+                        {manageServices()&&['WASHING','PAUSED','INSPECTION'].includes(w.status)&&<div><button type="button" className="text-button" onClick={serviceForm}>{t('newService')}</button><form className="form-fields" onSubmit={event=>{event.preventDefault();const form=event.currentTarget;const serviceIds=new FormData(form).getAll('serviceId').map(String);if(!serviceIds.length)return;void run(async()=>{for(const serviceId of serviceIds)await api(`tenants/${orgId}/washes/${w.id}/extra-services`,'POST',{serviceId});form.reset();});}}><fieldset className="field"><legend>{t('chooseServices')}</legend>{data.services.filter(service=>service.active&&!w.extraServices?.some(extra=>extra.id===service.id)&&(service.category==='ALL'||service.category===w.vehicle.category)).map(service=><label key={service.id} className="checkbox-row"><input type="checkbox" name="serviceId" value={service.id}/>{locale==='ar'?service.nameAr:service.nameEn} · {money(service.price,data.org.currency)}</label>)}</fieldset><button className="button outline compact" disabled={busy}>{t('addExtraService')}</button></form></div>}
                         
                         {w.bookedFor && (
                           <p className="muted">
@@ -2140,6 +2141,7 @@ export function OpsApp({ view }: { view: string }) {
     </div>
   );
 }
+
 
 
 

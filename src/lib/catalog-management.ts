@@ -19,7 +19,7 @@ export async function catalogManager(actor:Actor,orgId:string){
  if(isPlatformAdmin(actor.platformRole)&&(actor.platformRole==='SUPER_ADMIN'||actor.platformPermissions?.includes('platform.manage_tenants'))){
   platform(actor,'platform.manage_tenants');
   assert(await db.organization.findFirst({where:{id:orgId,status:'ACTIVE'}}),'NOT_FOUND',404);
- }else await tenant(actor,orgId,'tenant.manage_services');
+ }else { const scope=await tenant(actor,orgId); assert(scope.permissions.includes('tenant.manage_services')||scope.permissions.includes('wash.manage_services'),'FORBIDDEN',403); }
 }
 
 export async function addVehicleCategory(actor:Actor,orgId:string,raw:unknown){
@@ -53,3 +53,4 @@ export async function saveServicePrices(actor:Actor,orgId:string,serviceId:strin
 
 export async function removeService(actor:Actor,orgId:string,serviceId:string){await catalogManager(actor,orgId);z.uuid().parse(serviceId);return transaction(async tx=>{const service=await tx.washService.findFirst({where:{id:serviceId,orgId}});assert(service,'NOT_FOUND',404);const result=await tx.washService.update({where:{id:serviceId},data:{active:false}});await audit(tx,actor.id,'service.archived','service',serviceId,orgId);return result;});}
 export async function removeVehicleCategory(actor:Actor,orgId:string,categoryId:string){await catalogManager(actor,orgId);z.string().regex(/^CUSTOM_[A-Z0-9]+$/).parse(categoryId);return transaction(async tx=>{const category=await tx.vehicleCategory.findFirst({where:{code:categoryId,orgId}});assert(category,'NOT_FOUND',404);const result=await tx.vehicleCategory.update({where:{id:category.id},data:{active:false}});await audit(tx,actor.id,'vehicle_category.archived','vehicle_category',category.id,orgId);return result;});}
+

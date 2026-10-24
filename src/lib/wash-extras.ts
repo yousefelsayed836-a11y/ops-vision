@@ -1,21 +1,13 @@
-import {randomUUID} from 'node:crypto';
-import {z} from 'zod';
-import {Prisma} from '@/generated/prisma/client';
-import {assert} from './errors';
-import {branchScope,type Scope} from './access';
-import {transaction,audit} from './transactions';
-
-const active=['ASSIGNED','WASHING','PAUSED','INSPECTION'];
 export async function adjustWashMinutes(scope:Scope,id:string,raw:unknown){
  const {deltaSeconds}=z.object({deltaSeconds:z.number().int().refine(value=>value!==0&&Math.abs(value)<=7200&&value%10===0)}).parse(raw);
  assert(scope.permissions.includes('wash.start_session'),'FORBIDDEN',403);
  return transaction(async tx=>{
   const wash=await tx.wash.findFirst({where:{id,orgId:scope.orgId}});assert(wash,'NOT_FOUND',404);branchScope(scope,wash.branchId);
-  assert(active.includes(wash.status),'WASH_NOT_ACTIVE',409);assert(wash.startedAt,'WASH_NOT_STARTED',409);
-  const now=Date.now();const nextStartedAt=new Date(wash.startedAt.getTime()-deltaSeconds*1000);assert(nextStartedAt.getTime()<=now,'INVALID_START_TIME',422);
-  const updated=await tx.wash.update({where:{id:wash.id},data:{startedAt:nextStartedAt,version:{increment:1}}});
-  await audit(tx,scope.actor.id,'wash.time_adjusted','wash',id,scope.orgId,{deltaSeconds,startedAt:nextStartedAt.toISOString()});
-  return {startedAt:updated.startedAt,estimatedMinutes:updated.estimatedMinutes,timeAdjustmentSeconds:updated.timeAdjustmentSeconds,version:updated.version};
+  assert(active.includes(wash.status),'WASH_NOT_ACTIVE',409);
+  const next=wash.timeAdjustmentSeconds+deltaSeconds;assert(next>=-wash.estimatedMinutes*60&&next<=86400,'INVALID_DURATION',422);
+  const updated=await tx.wash.update({where:{id:wash.id},data:{timeAdjustmentSeconds:{increment:deltaSeconds},version:{increment:1}}});
+  await audit(tx,scope.actor.id,'wash.time_adjusted','wash',id,scope.orgId,{deltaSeconds,timeAdjustmentSeconds:next});
+  return {estimatedMinutes:updated.estimatedMinutes,timeAdjustmentSeconds:updated.timeAdjustmentSeconds,version:updated.version};
  });
 }
 export async function addWashExtraService(scope:Scope,id:string,raw:unknown){
@@ -105,5 +97,6 @@ export async function sendOwnerMessage(scope:Scope,raw:unknown){
   return {id:notice.id};
  });
 }
+
 
 

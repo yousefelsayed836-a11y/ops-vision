@@ -13,7 +13,7 @@ export async function platformBays(actor:Actor){
  const bays=await db.washBay.findMany({where:{orgId:{in:orgIds}},take:500,orderBy:[{orgId:'asc'},{branchId:'asc'},{name:'asc'},{id:'asc'}],include:{org:{select:{name:true}},branch:{select:{name:true,city:true,timezone:true,opensAt:true,closesAt:true,active:true}},cameras:{orderBy:{id:'asc'},select:{id:true,name:true,status:true,protocol:true,ipAddress:actor.platformRole==='SUPER_ADMIN'||!!actor.platformPermissions?.includes('platform.manage_cameras')}}}});
  const [services,washes,vehicleCategories]=await Promise.all([
   db.washService.findMany({where:{orgId:{in:orgIds},active:true},select:{id:true,orgId:true,nameAr:true,nameEn:true,category:true,durationMinutes:true,price:true,pricingRules:{select:{id:true,category:true,size:true,price:true,durationMinutes:true}}}}),
-  db.wash.findMany({where:{id:{in:bays.flatMap(b=>b.activeWashId?[b.activeWashId]:[])}},select:{id:true,orgId:true,status:true,version:true,serviceId:true,serviceNameAr:true,serviceNameEn:true,startedAt:true,checkedInAt:true,estimatedMinutes:true,timeAdjustmentSeconds:true,extraServices:{select:{id:true,serviceId:true,nameAr:true,nameEn:true},orderBy:{createdAt:'asc'}},vehicle:{select:{category:true,size:true}}}}),
+  db.wash.findMany({where:{id:{in:bays.flatMap(b=>b.activeWashId?[b.activeWashId]:[])}},select:{id:true,orgId:true,status:true,version:true,serviceId:true,serviceNameAr:true,serviceNameEn:true,startedAt:true,checkedInAt:true,estimatedMinutes:true,timeAdjustmentSeconds:true,history:{select:{toStatus:true,createdAt:true},orderBy:{createdAt:'asc'}},extraServices:{select:{id:true,serviceId:true,nameAr:true,nameEn:true},orderBy:{createdAt:'asc'}},vehicle:{select:{category:true,size:true}}}}),
   db.vehicleCategory.findMany({where:{orgId:{in:orgIds},active:true},select:{orgId:true,code:true,nameAr:true,nameEn:true}})
  ]);
  return {organizations,bays:bays.map(b=>({id:b.id,orgId:b.orgId,branchId:b.branchId,name:b.name,organization:b.org.name,branch:b.branch.name,branchDetails:b.branch,cameras:b.cameras,status:b.status,wash:washes.find(w=>w.id===b.activeWashId)??null})),services,vehicleCategories,limit:500};
@@ -43,11 +43,11 @@ export async function platformWashTransition(actor:Actor,id:string,raw:unknown){
 }
 export async function platformAdjustWashMinutes(actor:Actor,id:string,raw:unknown){
  platform(actor,'platform.operate_washes');
- const input=z.object({orgId:z.uuid(),deltaSeconds:z.number().int()}).parse(raw);
+ const input=z.object({orgId:z.uuid(),deltaSeconds:z.number().int().optional(),estimatedMinutes:z.number().int().min(1).max(1440).optional()}).parse(raw);
  const wash=await db.wash.findFirst({where:{id,orgId:input.orgId,org:{status:'ACTIVE'}}});assert(wash,'NOT_FOUND',404);
  const org=await db.organization.findUniqueOrThrow({where:{id:input.orgId}});
  const scope:Scope={actor,orgId:input.orgId,branchId:wash.branchId,role:'PLATFORM_OPERATOR',isDemo:org.isDemo,permissions:['wash.start_session']};
- return adjustWashMinutes(scope,id,{deltaSeconds:input.deltaSeconds});
+ return adjustWashMinutes(scope,id,input.estimatedMinutes!==undefined?{estimatedMinutes:input.estimatedMinutes}:{deltaSeconds:input.deltaSeconds});
 }
 export async function platformWashExtraService(actor:Actor,id:string,raw:unknown,extraId?:string){
  platform(actor,'platform.operate_washes');

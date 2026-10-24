@@ -904,7 +904,7 @@ export function OpsApp({ view }: { view: string }) {
             ...(has("tenant.manage_branches") || has("tenant.manage_bays")
               ? ["branches"]
               : []),
-            ...(manageServices() ? ["services"] : []),
+            ...(manageServices() || data?.role==='MANAGER' ? ["services"] : []),
             ...(has("tenant.manage_employees") ? ["team"] : []),
             ...(has("tenant.manage_cameras") ? ["cameraIp"] : []),
             ...(has("tenant.manage_customers") ? ["washCustomers"] : []),

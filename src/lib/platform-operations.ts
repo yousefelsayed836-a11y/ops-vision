@@ -8,7 +8,7 @@ import {randomUUID} from 'node:crypto';
 import {adjustWashMinutes,addWashExtraService,removeWashExtraService} from './wash-extras';
 export async function platformBays(actor:Actor){
  platform(actor,'platform.view_bays');
- const organizations=await db.organization.findMany({where:{status:'ACTIVE'},take:500,orderBy:[{name:'asc'},{id:'asc'}],select:{id:true,name:true,slug:true,currency:true,status:true,isDemo:true,branches:{select:{id:true,name:true,city:true,active:true},orderBy:{name:'asc'}},_count:{select:{bays:true,branches:true,cameras:true}}}});
+ const organizations=await db.organization.findMany({where:{status:'ACTIVE'},take:500,orderBy:[{name:'asc'},{id:'asc'}],select:{id:true,name:true,slug:true,currency:true,defaultWashMinutes:true,status:true,isDemo:true,branches:{select:{id:true,name:true,city:true,active:true},orderBy:{name:'asc'}},_count:{select:{bays:true,branches:true,cameras:true}}}});
  const orgIds=organizations.map(org=>org.id);
  const bays=await db.washBay.findMany({where:{orgId:{in:orgIds}},take:500,orderBy:[{orgId:'asc'},{branchId:'asc'},{name:'asc'},{id:'asc'}],include:{org:{select:{name:true}},branch:{select:{name:true,city:true,timezone:true,opensAt:true,closesAt:true,active:true}},cameras:{orderBy:{id:'asc'},select:{id:true,name:true,status:true,protocol:true,ipAddress:actor.platformRole==='SUPER_ADMIN'||!!actor.platformPermissions?.includes('platform.manage_cameras')}}}});
  const [services,washes,vehicleCategories]=await Promise.all([
@@ -20,16 +20,16 @@ export async function platformBays(actor:Actor){
 }
 export async function platformStart(actor:Actor,raw:unknown){
  platform(actor,'platform.operate_washes');
- const data=z.object({orgId:z.uuid(),bayId:z.uuid(),serviceId:z.uuid(),vehicle:vehicleInput.extend({plate:vehicleInput.shape.plate.optional()})}).parse(raw);
+ const data=z.object({orgId:z.uuid(),bayId:z.uuid(),serviceId:z.preprocess(v=>v===''?undefined:v,z.uuid().optional()),vehicle:vehicleInput.extend({plate:vehicleInput.shape.plate.optional()})}).parse(raw);
  data.vehicle.plate ||= `AUTO-${randomUUID().replaceAll('-','')}`;
  const bay=await db.washBay.findFirst({where:{id:data.bayId,orgId:data.orgId,org:{status:'ACTIVE'},branch:{active:true}}});assert(bay,'NOT_FOUND',404);assert(bay.status==='AVAILABLE'&&!bay.activeWashId,'BAY_UNAVAILABLE',409);
- const service=await db.washService.findFirst({where:{id:data.serviceId,orgId:data.orgId,active:true}});assert(service,'NOT_FOUND',404);assert(service.category==='ALL'||service.category===data.vehicle.category,'SERVICE_CATEGORY_MISMATCH',422);
+
  const org=await db.organization.findUniqueOrThrow({where:{id:data.orgId}});
  const scope:Scope={actor,orgId:org.id,branchId:bay.branchId,role:'PLATFORM_OPERATOR',isDemo:org.isDemo,permissions:['wash.start_session']};
  let vehicle=await db.vehicle.findUnique({where:{orgId_plate:{orgId:org.id,plate:data.vehicle.plate}}});
  if(vehicle){if((raw as {vehicle?:{size?:unknown}}).vehicle?.size===undefined)data.vehicle.size=vehicleInput.shape.size.parse(vehicle.size);assert(vehicle.category===data.vehicle.category&&vehicle.size===data.vehicle.size,'VEHICLE_DETAILS_MISMATCH',409);}
  else vehicle=await createVehicle(scope,data.vehicle);
- const wash=await createWash(scope,{branchId:bay.branchId,bayId:bay.id,serviceId:service.id,vehicleId:vehicle.id},true);
+ const wash=await createWash(scope,{branchId:bay.branchId,bayId:bay.id,serviceId:data.serviceId,vehicleId:vehicle.id},true);
  return {id:wash.id,status:'WASHING'};
 }
 

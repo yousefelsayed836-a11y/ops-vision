@@ -1,20 +1,16 @@
 import { betterAuth } from "better-auth";
-import {emailOTP} from "better-auth/plugins";
-import {sendEmail} from "./email-delivery";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { db } from "./db";
 import { seal } from "./crypto";
 export const auth = betterAuth({
   appName: "OpsVision",
-  plugins:[emailOTP({disableSignUp:true,otpLength:6,expiresIn:600,allowedAttempts:5,storeOTP:'hashed',overrideDefaultEmailVerification:true,sendVerificationOTP:async({email,otp})=>{await sendEmail(email,'OpsVision — كود تأكيد البريد الإلكتروني','كود تأكيد بريدك هو: '+otp+'\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.');}})],
-  emailVerification:{sendOnSignIn:true},
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   database: prismaAdapter(db, { provider: "postgresql", transaction: true }),
   secret: process.env.BETTER_AUTH_SECRET,
   verification: { storeIdentifier: "hashed" },
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    requireEmailVerification: false,
     disableSignUp: true,
     minPasswordLength: 12,
     maxPasswordLength: 128,

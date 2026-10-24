@@ -7,7 +7,7 @@ self.addEventListener("fetch", event => { if (event.request.mode === "navigate")
 self.addEventListener("push", event => {
   let payload={title:"OpsVision",body:"لديك تنبيه جديد",url:"/ar/dashboard"};
   try { if(event.data) payload={...payload,...event.data.json()}; } catch {}
-  event.waitUntil(self.registration.showNotification(payload.title,{body:payload.body,tag:"opsvision-alert",data:{url:payload.url}}));
+  event.waitUntil(Promise.all([self.navigator.setAppBadge?self.navigator.setAppBadge(payload.unreadCount||1).catch(()=>{}):Promise.resolve(),self.registration.showNotification(payload.title,{body:payload.body,tag:payload.notificationId||"opsvision-alert",icon:"/apps/opsvision-pink-192.png",badge:"/apps/opsvision-pink-192.png",data:{url:payload.url}})]));
 });
 self.addEventListener("notificationclick", event => {
   event.notification.close();

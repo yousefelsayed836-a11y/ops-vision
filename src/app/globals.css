@@ -1900,3 +1900,5 @@ td code {
 .compact-active-wash{grid-template-columns:minmax(220px,1fr) minmax(180px,1fr)!important}.compact-active-wash .dashboard-bay-car{width:100%!important;height:150px!important;max-height:none!important}.service-choice-option.service-added{background:#e5e7eb;color:#6b7280;border-color:#d1d5db;cursor:not-allowed;opacity:.8}.service-choice-option.service-added small{font-size:.8em}
 
 .compact-active-wash{min-width:0;overflow:hidden}.compact-active-wash .dashboard-bay-car{max-width:100%;min-width:0;grid-column:1;grid-row:1 / span 2}.compact-active-wash h4,.compact-active-wash .active-wash-summary{grid-column:2}@media(max-width:600px){.compact-active-wash{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:8px}.compact-active-wash .dashboard-bay-car{height:110px!important;width:100%!important}.compact-active-wash .wash-activity{grid-column:1/-1}}
+
+.toast[popover]{position:fixed;inset:auto;top:20px;inset-inline-end:20px;bottom:auto;margin:0;border:0;z-index:2147483647}.toast[popover]:popover-open{display:flex}

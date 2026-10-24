@@ -9,17 +9,18 @@ export async function sendEmail(to:string,subject:string,text:string,idempotency
 export async function dispatchEmails(){
  if(!process.env.RESEND_API_KEY)return;
  const [notices,users,memberships,customRoles]=await Promise.all([
- db.notification.findMany({where:{createdAt:{gte:new Date(Date.now()-86400000)}},orderBy:{createdAt:'asc'},take:500}),
+ db.notification.findMany({where:{type:{not:'WASH_OVERDUE'},createdAt:{gte:new Date(Date.now()-86400000)}},orderBy:{createdAt:'asc'},take:500}),
  db.user.findMany({where:{disabled:false},select:{id:true,email:true,emailVerified:true,createdAt:true,platformRole:true,platformPermissions:true}}),
  db.membership.findMany({where:{active:true,org:{status:'ACTIVE'}},select:{userId:true,orgId:true,role:true}}),db.role.findMany({select:{orgId:true,name:true,permissions:true}})]);
  for(const notice of notices)for(const user of users){
- if(!user.emailVerified||notice.createdAt<user.createdAt)continue;
+ if(notice.createdAt<user.createdAt)continue;
  let eligible=notice.recipientId===user.id;if(notice.recipientId&&!eligible)continue;
  if(!notice.recipientId){if(notice.orgId===null)eligible=user.platformRole==='SUPER_ADMIN'||user.platformRole==='PLATFORM_ADMIN'&&user.platformPermissions.includes(notice.permission);
  else {const member=memberships.find(m=>m.userId===user.id&&m.orgId===notice.orgId);if(member){const role=customRoles.find(r=>r.orgId===member.orgId&&r.name===member.role);eligible=(role?.permissions??roles[member.role]??[]).includes(notice.permission as never);}}}
  if(!eligible)continue;
  const id=digest('notice-email:'+notice.id+':'+user.id);await db.outbox.upsert({where:{id},create:{id,orgId:notice.orgId,kind:'NOTIFICATION',recipient:user.email,status:'PENDING',encryptedPayload:seal({subject:'OpsVision — إشعار جديد',text:notice.message})},update:{}});
  }
+ await db.outbox.updateMany({where:{status:{in:['PENDING','PROVIDER_UNCONFIGURED']},kind:'NOTIFICATION',id:{in:(await db.notification.findMany({where:{type:'WASH_OVERDUE'},select:{id:true}})).flatMap(notice=>users.map(user=>digest('notice-email:'+notice.id+':'+user.id)))}},data:{status:'CANCELLED'}});
  const pending=await db.outbox.findMany({where:{status:{in:['PENDING','PROVIDER_UNCONFIGURED']}},orderBy:{createdAt:'asc'},take:100});
  for(const item of pending){try{const payload=unseal(item.encryptedPayload) as {subject?:string;text?:string;token?:string;activationPath?:string};
  const base=process.env.APP_URL??process.env.BETTER_AUTH_URL??'https://opsvision.org';

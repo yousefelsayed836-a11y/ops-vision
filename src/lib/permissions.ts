@@ -41,7 +41,7 @@ export type Permission =
 export const roles: Record<string, readonly Permission[]> = {
   OWNER: tenantPermissions.filter((p) => ![
     "wash.create_session", "wash.assign_workers", "wash.start_session",
-    "wash.pause_session", "wash.complete_session", "wash.cancel_session",
+    "wash.pause_session", "wash.complete_session", "wash.cancel_session", "wash.manage_services", "finance.manage_payments",
   ].includes(p)),
   MANAGER: tenantPermissions.filter((p) => p !== "tenant.manage_roles"),
   SUPERVISOR: [

@@ -16,7 +16,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; route?: string[] }>;
 }) {
   const { locale, route } = await params;
-  if (route?.[0] !== "dashboard") return {};
+  if (!["dashboard","login"].includes(route?.[0]??"")) return {};
   return {
     manifest: `/apps/${locale}.webmanifest`,
     appleWebApp: { capable: true, title: "OpsVision" },

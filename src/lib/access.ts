@@ -57,7 +57,7 @@ export async function tenant(
   // Keep service controls for managers whose custom role predates these permissions.
   const permissions = member.role === "MANAGER"
     ? [...new Set([...basePermissions, "tenant.manage_services", "wash.manage_services"])]
-    : basePermissions;
+    : member.role === "OWNER" ? [...new Set([...basePermissions,"tenant.manage_bays","tenant.manage_services"])] : basePermissions;
   return {
     actor,
     orgId,

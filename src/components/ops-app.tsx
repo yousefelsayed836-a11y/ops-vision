@@ -117,7 +117,7 @@ function Field({ field,selectedCategory,onCategoryChange }: { field: FormField;s
         >
           {!field.multiple && (
             <option value="" disabled>
-              â€”
+              —
             </option>
           )}
           {field.options.filter(o=>!o.category||!selectedCategory||o.category==='ALL'||o.category===selectedCategory).map((o) => (
@@ -209,8 +209,8 @@ function FormDialog({
             <Field key={field.name==='serviceId'?`${field.name}-${selectedCategory}`:field.name} field={field} selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory}/>
           ))}
         </div>
-        <button disabled={busy||modal.fields.some(field=>field.type==='service-choice'&&!field.options?.some(option=>!option.category||option.category==='ALL'||option.category===selectedCategory))} className="button primary full" type="submit">
-          {busy ? "â€¦" : modal.submit}
+        <button disabled={busy} className="button primary full" type="submit">
+          {busy ? "…" : modal.submit}
         </button>
       </form>
     </dialog>
@@ -455,6 +455,7 @@ export function OpsApp({ view }: { view: string }) {
   }, [view, me, orgId, isPlatform, load]);
   useEffect(() => {
     if (!toast) return;
+    if(toast.error)return;
     const timeout = setTimeout(() => setToast(null), 8000);
     return () => clearTimeout(timeout);
   }, [toast]);
@@ -497,9 +498,6 @@ export function OpsApp({ view }: { view: string }) {
           email: String(values.email),
           password: String(values.password),
         });
-        if(result.error?.code==='EMAIL_NOT_VERIFIED'){
-          setModal({title:locale==='ar'?'تأكيد البريد الإلكتروني':'Verify email',description:locale==='ar'?'أرسلنا كودًا من 6 أرقام إلى بريدك. صالح لمدة 10 دقائق.':'Enter the six digit code sent to your email.',fields:[{name:'otp',label:locale==='ar'?'كود التأكيد':'Verification code',required:true}],submit:locale==='ar'?'تأكيد وتسجيل الدخول':'Verify and sign in',execute:async v=>{const verified=await authClient.emailOtp.verifyEmail({email:String(values.email),otp:v.otp});if(verified.error)throw new Error(verified.error.message);const login=await authClient.signIn.email({email:String(values.email),password:String(values.password)});if(login.error)throw new Error(login.error.message);router.push(href('dashboard'));router.refresh();}});return;
-        }
         if (result.error) {
           setToast({
             text:
@@ -890,7 +888,7 @@ export function OpsApp({ view }: { view: string }) {
             : canPlatform('platform.manage_tenants')?['notifications']:[]),
           ...(canPlatform("platform.view_reports") ? ["platformReports"] : []),
           ...(canPlatform("platform.manage_users") ? ["team"] : []),
-          ...(me?.user.platformRole==='SUPER_ADMIN'?['accounts']:[]),
+          ...(canPlatform('platform.manage_users')?['accounts']:[]),
           "installApp",
           ...((has("tenant.manage_profile")||manageServices()) ? ["organizationSettingsTab"] : []),
         ]
@@ -967,25 +965,30 @@ export function OpsApp({ view }: { view: string }) {
     : [
         {
           label: t("sessions"),
-          value: statsAllowed ? selectedDay?.sessions ?? "â€¦" : data?.washes.length ?? 0,
+          value: statsAllowed ? selectedDay?.sessions ?? "…" : data?.washes.length ?? 0,
         },
-        { label: t(statsDate?"statsStarted":"active"), value: statsAllowed ? (statsDate?selectedDay?.started:selectedDay?.active) ?? "â€¦" : running.length },
+        { label: t(statsDate?"statsStarted":"active"), value: statsAllowed ? (statsDate?selectedDay?.started:selectedDay?.active) ?? "…" : running.length },
         {
           label: t("statsAvailableNow"),
           value: selectedDay?.available ?? data?.bays.filter((b) => b.status === "AVAILABLE").length ?? 0,
         },
         {
           label: t("completed"),
-          value: statsAllowed ? selectedDay?.completed ?? "â€¦" :
+          value: statsAllowed ? selectedDay?.completed ?? "…" :
             data?.washes.filter((w) =>
               ["COMPLETED", "DELIVERED"].includes(w.status),
             ).length ?? 0,
         },
       ];
+  const unreadNotifications=(data?.notifications??platformData?.notifications??[]).filter(n=>!n.readBy.includes(me?.user.id??'')).length;
+  useEffect(()=>{const badges=navigator as Navigator&{setAppBadge?:(count:number)=>Promise<void>;clearAppBadge?:()=>Promise<void>};void (unreadNotifications?badges.setAppBadge?.(unreadNotifications):badges.clearAppBadge?.())?.catch(()=>{});},[unreadNotifications]);
   const dateControl=statsAllowed&&<div className="statistics-date-control"><label className="field">{t('statsDate')}<input type="date" value={statsDate} onChange={e=>setStatsDate(e.target.value)}/></label><button className="button outline" onClick={()=>setStatsDate('')}>{t('statsAll')}</button>{selectedDay&&<small>{selectedDay.timezone}</small>}{statsDate&&<p className="muted">{t('statsDateNote')}</p>}{statsFailure===`${orgId}:${statsDate||'all'}`&&<p role="alert">{t('statsLoadError')}</p>}</div>;
+  const globalToastRef=useRef<HTMLDivElement>(null);
+  useEffect(()=>{if(toast&&globalToastRef.current&&!globalToastRef.current.matches(':popover-open'))globalToastRef.current.showPopover?.();},[toast]);
+  useEffect(()=>{const receive=(event:Event)=>{const code=String((event as CustomEvent).detail??'INTERNAL_ERROR');setToast({text:t.has('errors.'+code)?t('errors.'+code):t('error')+' ('+code+')',error:true});};window.addEventListener('opsvision-error',receive);return()=>window.removeEventListener('opsvision-error',receive);},[t]);
   const toastView = toast && (
     <div
-      className={`toast ${toast.error ? "toast-error" : ""}`}
+      ref={globalToastRef} popover="manual" className={`toast ${toast.error ? "toast-error" : ""}`}
       role={toast.error ? "alert" : "status"}
     >
       <span>{toast.text}</span>
@@ -1193,19 +1196,7 @@ export function OpsApp({ view }: { view: string }) {
                 }}
               >
                 <span>{t(item)}</span>
-                {item === "notifications" &&
-                  data &&
-                  data.notifications.filter(
-                    (n) => !n.readBy.includes(me?.user.id ?? ""),
-                  ).length > 0 && (
-                    <b>
-                      {
-                        data.notifications.filter(
-                          (n) => !n.readBy.includes(me?.user.id ?? ""),
-                        ).length
-                      }
-                    </b>
-                  )}
+                {item==='notifications'&&unreadNotifications>0&&<b>{unreadNotifications}</b>}
               </button>
             );
           })}
@@ -1285,7 +1276,7 @@ export function OpsApp({ view }: { view: string }) {
             </button>
           </div>
         </header>
-        <main className="workspace">
+        <main className="workspace"><InstallApp active={tab === "installApp"}/>
           <div className="page-title">
             <div>
               <h1>{tab === "overview" ? t("workspaceTitle") : t(tab)}</h1>
@@ -1732,7 +1723,7 @@ export function OpsApp({ view }: { view: string }) {
                         <p className="muted">
                           {data.branches.find((b) => b.id === w.branchId)?.name}{" "}
                           Â·{" "}
-                          {data.bays.find((b) => b.id === w.bayId)?.name ?? "â€”"}
+                          {data.bays.find((b) => b.id === w.bayId)?.name ?? "—"}
                         </p>
                         <div className="wash-timing">
                           <div>
@@ -1752,8 +1743,8 @@ export function OpsApp({ view }: { view: string }) {
                           </div>
                         </div>
                         <WashActivity washId={w.id} orgId={orgId} history={w.history} startedAt={w.startedAt} completedAt={w.completedAt} status={w.status} estimatedMinutes={w.estimatedMinutes} timeAdjustmentSeconds={w.timeAdjustmentSeconds} canAdjust={has('wash.start_session')} canComment={!isCustomer&&data.role!=='OWNER'&&has('wash.view_sessions')} onChanged={refresh}/>
-                        {w.extraServices?.map(extra=><p className="muted" key={extra.id}>{t('extraService')}: {locale==='ar'?extra.nameAr:extra.nameEn} · {extra.durationMinutes} {t('reportMinutes')} {manageServices()&&['WASHING','PAUSED','INSPECTION'].includes(w.status)&&<button type="button" className="text-button" disabled={busy} onClick={()=>void run(()=>api(`tenants/${orgId}/washes/${w.id}/extra-services/${extra.id}`,'DELETE',{}))}>{t('removeExtraService')}</button>}</p>)}
-                        {manageServices()&&['WASHING','PAUSED','INSPECTION'].includes(w.status)&&<div><button type="button" className="text-button" onClick={serviceForm}>{t('newService')}</button><form className="form-fields" onSubmit={event=>{event.preventDefault();const form=event.currentTarget;const serviceIds=new FormData(form).getAll('serviceId').map(String);if(!serviceIds.length)return;void run(async()=>{for(const serviceId of serviceIds)await api(`tenants/${orgId}/washes/${w.id}/extra-services`,'POST',{serviceId});form.reset();});}}><fieldset className="field"><legend>{t('chooseServices')}</legend>{data.services.filter(service=>service.active&&!w.extraServices?.some(extra=>extra.serviceId===service.id)&&(service.category==='ALL'||service.category===w.vehicle.category)).map(service=><label key={service.id} className="checkbox-row"><input type="checkbox" name="serviceId" value={service.id}/>{locale==='ar'?service.nameAr:service.nameEn} · {money(service.price,data.org.currency)}</label>)}</fieldset><button className="button outline compact" disabled={busy}>{t('addExtraService')}</button></form></div>}
+                        {w.extraServices?.map(extra=><p className="muted" key={extra.id}>{t('extraService')}: {locale==='ar'?extra.nameAr:extra.nameEn} · {extra.durationMinutes} {t('reportMinutes')} {data.role!=='OWNER'&&manageServices()&&['WASHING','PAUSED','INSPECTION'].includes(w.status)&&<button type="button" className="text-button" disabled={busy} onClick={()=>void run(()=>api(`tenants/${orgId}/washes/${w.id}/extra-services/${extra.id}`,'DELETE',{}))}>{t('removeExtraService')}</button>}</p>)}
+                        {data.role!=='OWNER'&&manageServices()&&['WASHING','PAUSED','INSPECTION'].includes(w.status)&&<div><button type="button" className="text-button" onClick={serviceForm}>{t('newService')}</button><form className="form-fields" onSubmit={event=>{event.preventDefault();const form=event.currentTarget;const serviceIds=new FormData(form).getAll('serviceId').map(String);if(!serviceIds.length)return;void run(async()=>{for(const serviceId of serviceIds)await api(`tenants/${orgId}/washes/${w.id}/extra-services`,'POST',{serviceId});form.reset();});}}><fieldset className="field"><legend>{t('chooseServices')}</legend>{data.services.filter(service=>service.active&&!w.extraServices?.some(extra=>extra.serviceId===service.id)&&(service.category==='ALL'||service.category===w.vehicle.category)).map(service=><label key={service.id} className="checkbox-row"><input type="checkbox" name="serviceId" value={service.id}/>{locale==='ar'?service.nameAr:service.nameEn} · {money(service.price,data.org.currency)}</label>)}</fieldset><button className="button outline compact" disabled={busy}>{t('addExtraService')}</button></form></div>}
                         
                         {w.bookedFor && (
                           <p className="muted">
@@ -1764,7 +1755,7 @@ export function OpsApp({ view }: { view: string }) {
                           <span>
                             {w.price !== undefined
                               ? money(w.price, w.currency)
-                              : "â€”"}
+                              : "—"}
                           </span>
                           <Badge
                             value={w.paymentStatus}
@@ -1830,7 +1821,7 @@ export function OpsApp({ view }: { view: string }) {
                   {!washes.length && <StateEmpty title={t("empty")} />}
                 </>
               )}
-              <InstallApp active={tab === "installApp"} />
+
               {tab === "team" &&
                 platformData &&
                 canPlatform("platform.manage_users") && (
@@ -1929,7 +1920,7 @@ export function OpsApp({ view }: { view: string }) {
                   </div>
                 </>
               )}
-              {tab==='accounts'&&me?.user.platformRole==='SUPER_ADMIN'&&<AccountAdmin/>}
+              {tab==='accounts'&&canPlatform('platform.manage_users')&&<AccountAdmin/>}
               {tab === "team" && data && (
                 <div className="panel spaced">
                   <div className="section-title">
@@ -1986,7 +1977,7 @@ export function OpsApp({ view }: { view: string }) {
                     <div className="revenue-banner">
                       <span>{t(statsDate?"statsRevenueDay":"revenue")}</span>
                       <strong>
-                        {selectedDay?money(selectedDay.revenue??'0'):'â€¦'}
+                        {selectedDay?money(selectedDay.revenue??'0'):'…'}
                       </strong>
                     </div>
                   )}

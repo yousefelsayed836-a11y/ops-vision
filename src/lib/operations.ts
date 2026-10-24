@@ -4,7 +4,7 @@ import { branchScope, type Scope } from "./access";
 import { createWashInput, vehicleInput } from "./validation";
 import { emit } from "./automation";
 import { Prisma } from "@/generated/prisma/client";
-import { randomUUID } from "node:crypto";
+import { randomUUID,createHash } from "node:crypto";
 import {builtinVehicleCategories} from "./catalog";
 
 import { validTransition } from "./domain";
@@ -92,6 +92,10 @@ export async function createWash(scope: Scope, raw: unknown, startImmediately=fa
   assert(!startImmediately||(data.bayId&&!data.bookedFor),'BAY_REQUIRED',422);
   branchScope(scope, data.branchId);
   return transaction(async (tx) => {
+    if(!data.serviceId){
+      const hex=createHash('sha256').update('standard-wash:'+scope.orgId).digest('hex');const id=hex.slice(0,8)+'-'+hex.slice(8,12)+'-4'+hex.slice(13,16)+'-8'+hex.slice(17,20)+'-'+hex.slice(20,32);
+      const standard=await tx.washService.upsert({where:{id},create:{id,orgId:scope.orgId,nameAr:'غسيل عادي',nameEn:'Standard wash',category:'ALL',price:'0',durationMinutes:20},update:{}});data.serviceId=standard.id;
+    }
     const [branch, service, vehicle, org] = await Promise.all([
       tx.branch.findFirst({
         where: { id: data.branchId, orgId: scope.orgId, active: true },
@@ -135,7 +139,7 @@ export async function createWash(scope: Scope, raw: unknown, startImmediately=fa
         (Number(a.category !== "ALL") * 2 + Number(a.size !== "ALL")),
     );
     const subtotal = pricing[0]?.price ?? service.price;
-    const serviceMinutes = pricing[0]?.durationMinutes ?? service.durationMinutes;
+    const serviceMinutes = org.defaultWashMinutes;
     const discount = new Prisma.Decimal(data.discount);
     assert(discount.lte(subtotal), "DISCOUNT_EXCEEDS_TOTAL");
     assert(

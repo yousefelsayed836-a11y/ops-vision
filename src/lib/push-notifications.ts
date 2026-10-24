@@ -43,7 +43,7 @@ export async function dispatchPushNotifications(){
    if(!eligible)continue;
    const existing=await db.pushDelivery.findUnique({where:{subscriptionId_notificationId:{subscriptionId:sub.id,notificationId:notice.id}}});if(existing)continue;
    const delivery=await db.pushDelivery.create({data:{subscriptionId:sub.id,notificationId:notice.id}});
-   try{await webpush.sendNotification({endpoint:sub.endpoint,keys:{p256dh:sub.p256dh,auth:sub.auth}},JSON.stringify({title:'OpsVision',body:notice.message,url:'/ar/dashboard'}),{TTL:3600});await db.pushDelivery.update({where:{id:delivery.id},data:{status:'SENT'}});}
+   try{await webpush.sendNotification({endpoint:sub.endpoint,keys:{p256dh:sub.p256dh,auth:sub.auth}},JSON.stringify({title:'OpsVision',body:notice.message,notificationId:notice.id,unreadCount:notifications.filter(n=>!n.readBy.includes(sub.userId)&&(n.recipientId===sub.userId||!n.recipientId&&n.orgId===notice.orgId&&n.permission===notice.permission)).length,url:'/ar/dashboard'}),{TTL:3600});await db.pushDelivery.update({where:{id:delivery.id},data:{status:'SENT'}});}
    catch(error){const code=typeof error==='object'&&error&&'statusCode'in error?Number(error.statusCode):0;await db.pushDelivery.update({where:{id:delivery.id},data:{status:'FAILED'}});if(code===404||code===410)await db.pushSubscription.deleteMany({where:{id:sub.id}});}
   }
  }

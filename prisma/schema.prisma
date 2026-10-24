@@ -70,6 +70,7 @@ model Organization {
   currency String @default("SAR")
   isDemo Boolean @default(false)
   cancellationLeadHours Int @default(1)
+  defaultWashMinutes Int @default(20)
   siteIp String?
   publicNotice String @default("")
   createdAt DateTime @default(now())

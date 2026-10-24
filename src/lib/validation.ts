@@ -70,7 +70,7 @@ export const vehicleInput = z.object({
 export const createWashInput = z.object({
   branchId: z.uuid(),
   bayId: z.uuid().optional(),
-  serviceId: z.uuid(),
+  serviceId: z.preprocess(value=>value===''?undefined:value,z.uuid().optional()),
   vehicleId: z.uuid(),
   notes: z.string().max(1000).default(""),
   bookedFor: z.iso.datetime().optional(),

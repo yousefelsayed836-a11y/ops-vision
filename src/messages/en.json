@@ -1,4 +1,5 @@
 {
+  "added": "Added",
   "book": "Book a wash",
   "bookingTime": "Reservation time",
   "cancelBooking": "Cancel reservation",
@@ -248,6 +249,7 @@
   "tenantIsolationText": "Each account has access based on its role in the car wash.",
   "externalNotice": "Camera connections, online payments and external messaging are not available yet.",
   "errors": {
+    "INVALID_CATEGORY": "The selected vehicle category is not available.",
     "UNAUTHENTICATED": "Sign in to continue.",
     "FORBIDDEN": "You do not have permission for this action.",
     "APPLICATION_EXISTS": "A request already exists for this email.",

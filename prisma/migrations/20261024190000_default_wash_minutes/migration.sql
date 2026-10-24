@@ -1,0 +1,1 @@
+ALTER TABLE "Organization" ADD COLUMN "defaultWashMinutes" INTEGER NOT NULL DEFAULT 20;

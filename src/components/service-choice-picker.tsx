@@ -9,6 +9,7 @@ export function ServiceChoicePicker({name="serviceId",label,options,category,cur
  const t=useTranslations(),locale=useLocale();
  return <fieldset className="field service-choice-picker">
   <legend>{label}</legend>
+  <label className="service-choice-option"><input type="radio" name={name} value="" defaultChecked/><span>{locale==='ar'?'بدون اختيار خدمة · المدة المحددة للمغسلة':'No service selected · wash default duration'}</span></label>
   {options.length?<div className="service-choice-options">{options.map(option=>{
    const unavailable=!!option.category&&option.category!=='ALL'&&option.category!==category;
    return <label className="service-choice-option" key={option.value}>

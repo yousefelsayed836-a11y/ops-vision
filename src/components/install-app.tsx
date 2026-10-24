@@ -17,7 +17,7 @@ export function InstallApp({active}:{active:boolean}){
  async function install(device:string){
   setSelected(device);setStatus('');
   if(installed){setStatus('installed');return;}
-  if(device==='iphone'||!prompt){setStatus('manual');return;}
+  if(!window.isSecureContext){setStatus('unavailable');return;}if(device==='iphone'||!prompt){setStatus('manual');return;}
   setBusy(true);try{await prompt.prompt();const choice=await prompt.userChoice;setPrompt(null);setStatus(choice.outcome==='accepted'?'accepted':'dismissed');}catch{setPrompt(null);setStatus('unavailable');}finally{setBusy(false);}
  }
  return <section className="panel" hidden={!active}><h2>{t('installApp')}</h2>

@@ -13,7 +13,7 @@ export async function adjustWashMinutes(scope:Scope,id:string,raw:unknown){
  return transaction(async tx=>{
   const wash=await tx.wash.findFirst({where:{id,orgId:scope.orgId}});assert(wash,'NOT_FOUND',404);branchScope(scope,wash.branchId);
   assert(active.includes(wash.status),'WASH_NOT_ACTIVE',409);
-  if('estimatedMinutes' in input){const updated=await tx.wash.update({where:{id:wash.id},data:{estimatedMinutes:input.estimatedMinutes,version:{increment:1}}});await audit(tx,scope.actor.id,'wash.duration_changed','wash',id,scope.orgId,{estimatedMinutes:input.estimatedMinutes});return {estimatedMinutes:updated.estimatedMinutes,timeAdjustmentSeconds:updated.timeAdjustmentSeconds,version:updated.version};}
+  if('estimatedMinutes' in input){assert(scope.role==='PLATFORM_OPERATOR','FORBIDDEN',403);const updated=await tx.wash.update({where:{id:wash.id},data:{estimatedMinutes:input.estimatedMinutes,version:{increment:1}}});await audit(tx,scope.actor.id,'wash.duration_changed','wash',id,scope.orgId,{estimatedMinutes:input.estimatedMinutes});return {estimatedMinutes:updated.estimatedMinutes,timeAdjustmentSeconds:updated.timeAdjustmentSeconds,version:updated.version};}
   const next=wash.timeAdjustmentSeconds+deltaSeconds;assert(next>=-wash.estimatedMinutes*60&&next<=86400,'INVALID_DURATION',422);
   const updated=await tx.wash.update({where:{id:wash.id},data:{timeAdjustmentSeconds:{increment:deltaSeconds},version:{increment:1}}});
   await audit(tx,scope.actor.id,'wash.time_adjusted','wash',id,scope.orgId,{deltaSeconds,timeAdjustmentSeconds:next});
@@ -21,7 +21,7 @@ export async function adjustWashMinutes(scope:Scope,id:string,raw:unknown){
  });
 }
 export async function addWashExtraService(scope:Scope,id:string,raw:unknown){
- assert(scope.permissions.includes('tenant.manage_services')||scope.permissions.includes('wash.manage_services'),'FORBIDDEN',403);
+ assert(scope.role!=='OWNER'&&(scope.permissions.includes('tenant.manage_services')||scope.permissions.includes('wash.manage_services')),'FORBIDDEN',403);
  const {serviceId}=z.object({serviceId:z.uuid()}).parse(raw);
  return transaction(async tx=>{
   const wash=await tx.wash.findFirst({where:{id,orgId:scope.orgId},include:{vehicle:true}});assert(wash,'NOT_FOUND',404);branchScope(scope,wash.branchId);
@@ -36,13 +36,13 @@ export async function addWashExtraService(scope:Scope,id:string,raw:unknown){
   const serviceMinutes=rules[0]?.durationMinutes??service.durationMinutes;
 
   const price=base;
-  assert((wash.estimatedMinutes+serviceMinutes)*60+wash.timeAdjustmentSeconds<=86400,'INVALID_DURATION',422);
+
   const extra=await tx.washExtraService.create({data:{id:randomUUID(),orgId:scope.orgId,washId:id,serviceId,nameAr:service.nameAr,nameEn:service.nameEn,price,durationMinutes:serviceMinutes,addedById:scope.actor.id}});
   const nextSubtotal=wash.subtotal.plus(base);
 
   const nextTaxable=nextSubtotal.minus(wash.discount);
   const nextTax=new Prisma.Decimal(0);
-  await tx.wash.update({where:{id},data:{subtotal:nextSubtotal,taxAmount:nextTax,price:nextTaxable.plus(nextTax),estimatedMinutes:{increment:serviceMinutes},version:{increment:1}}});
+  await tx.wash.update({where:{id},data:{subtotal:nextSubtotal,taxAmount:nextTax,price:nextTaxable.plus(nextTax),version:{increment:1}}});
   await audit(tx,scope.actor.id,'wash.extra_service_added','wash',id,scope.orgId,{serviceId,extraId:extra.id,price:String(price)});
   return {id:extra.id,nameAr:extra.nameAr,nameEn:extra.nameEn,price:String(extra.price),durationMinutes:extra.durationMinutes};
  });
@@ -62,7 +62,7 @@ export async function removeWashExtraService(scope:Scope,id:string,extraId:strin
   const taxable=nextSubtotal.minus(nextDiscount);
   const nextTax=new Prisma.Decimal(0);
   await tx.washExtraService.delete({where:{id:extraId}});
-  await tx.wash.update({where:{id},data:{subtotal:nextSubtotal,discount:nextDiscount,taxAmount:nextTax,price:taxable.plus(nextTax),estimatedMinutes:{decrement:extra.durationMinutes},version:{increment:1}}});
+  await tx.wash.update({where:{id},data:{subtotal:nextSubtotal,discount:nextDiscount,taxAmount:nextTax,price:taxable.plus(nextTax),version:{increment:1}}});
   await audit(tx,scope.actor.id,'wash.extra_service_removed','wash',id,scope.orgId,{extraId});
   return {removed:true};
  });

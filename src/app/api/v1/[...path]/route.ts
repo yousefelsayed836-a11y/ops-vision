@@ -157,6 +157,10 @@ async function handle(req: Request, context: Context) {
         403,
       );
       const granted = grantedPlatformPermissions(actor);
+      if(path[1]==='organizations'&&path[3]==='wash-duration'&&path.length===4&&method==='PATCH'){
+        platform(actor,'platform.manage_tenants');const orgId=z.uuid().parse(path[2]);const data=z.object({defaultWashMinutes:z.coerce.number().int().min(1).max(1440)}).parse(await body());
+        return response(await transaction(async tx=>{const record=await tx.organization.update({where:{id:orgId},data});await audit(tx,actor.id,'organization.wash_duration_changed','organization',orgId,orgId,data);return {defaultWashMinutes:record.defaultWashMinutes};}));
+      }
       if(path[1]==='organizations'&&path[3]==='services'&&path.length===5&&method==='DELETE'){
         platform(actor,'platform.manage_tenants');
         return response(await removeService(actor,z.uuid().parse(path[2]),z.uuid().parse(path[4])));
@@ -406,6 +410,7 @@ async function handle(req: Request, context: Context) {
             name: true,
             slug: true,
             currency: true,
+            defaultWashMinutes: true,
             isDemo: true,
             publicNotice: true,
             cancellationLeadHours: true,

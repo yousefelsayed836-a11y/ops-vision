@@ -1,7 +1,6 @@
 "use client";
 import { createAuthClient } from "better-auth/react";
-import {emailOTPClient} from "better-auth/client/plugins";
-export const authClient = createAuthClient({plugins:[emailOTPClient()]});
+export const authClient = createAuthClient();
 export class ApiError extends Error {
   constructor(public code: string) {
     super(code);
@@ -21,6 +20,6 @@ export async function api<T>(
     credentials: "same-origin",
   });
   const json = await result.json();
-  if (!result.ok) throw new ApiError(json.error ?? "INTERNAL_ERROR");
+  if (!result.ok) {const code=json.error??'INTERNAL_ERROR';window.dispatchEvent(new CustomEvent('opsvision-error',{detail:code}));throw new ApiError(code);}
   return json as T;
 }

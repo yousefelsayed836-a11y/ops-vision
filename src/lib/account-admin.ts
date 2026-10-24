@@ -4,9 +4,10 @@ import {db} from './db';
 import {assert} from './errors';
 import {transaction,audit} from './transactions';
 import {email,password} from './validation';
-import type {Actor} from './access';
+import {platform,type Actor} from './access';
+import {randomUUID} from 'node:crypto';
 
-function superAdmin(actor:Actor){assert(actor.platformRole==='SUPER_ADMIN','FORBIDDEN',403);}
+function superAdmin(actor:Actor){platform(actor,'platform.manage_users');}
 export async function listAccounts(actor:Actor){
  superAdmin(actor);
  return db.user.findMany({select:{id:true,name:true,email:true,platformRole:true,disabled:true,memberships:{select:{role:true,org:{select:{name:true}}}}},orderBy:{createdAt:'desc'},take:500});
@@ -24,7 +25,7 @@ export async function updateAccountCredentials(actor:Actor,id:string,raw:unknown
   }
   if(hashed){
    const changed=await tx.account.updateMany({where:{userId:id,providerId:'credential'},data:{password:hashed}});
-   assert(changed.count===1,'NO_PASSWORD_ACCOUNT',409);
+   if(changed.count===0)await tx.account.create({data:{id:randomUUID(),userId:id,accountId:id,providerId:'credential',password:hashed}});
   }
   await tx.session.deleteMany({where:{userId:id}});
   await audit(tx,actor.id,'account.credentials_updated','user',id,undefined,{emailChanged:!!data.email&&data.email!==user.email,passwordChanged:!!hashed});

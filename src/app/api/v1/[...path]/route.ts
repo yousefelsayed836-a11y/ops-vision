@@ -923,7 +923,7 @@ async function handle(req: Request, context: Context) {
       const data = z
         .object({
           name: text,
-          currency: z.literal("SAR"),
+          currency: z.enum(["SAR", "EGP", "AED", "KWD"]),
           cancellationLeadHours: z.number().int().min(0).max(72),
           siteIp: z
             .union([z.ipv4(), z.ipv6(), z.literal("")])
@@ -1099,3 +1099,4 @@ export const GET = handle;
 export const POST = handle;
 export const PATCH = handle;
 export const DELETE = handle;
+

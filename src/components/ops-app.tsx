@@ -698,7 +698,7 @@ export function OpsApp({ view }: { view: string }) {
         {
           name: "currency",
           label: t("currency"),
-          options: ["SAR"].map((value) => ({
+          options: ["SAR", "EGP", "AED", "KWD"].map((value) => ({
             value,
             label: value,
           })),
@@ -2140,6 +2140,7 @@ export function OpsApp({ view }: { view: string }) {
     </div>
   );
 }
+
 
 
 

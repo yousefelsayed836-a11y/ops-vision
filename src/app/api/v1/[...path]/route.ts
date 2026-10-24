@@ -3,7 +3,7 @@ import {listWashCustomers,quickCustomer} from "@/lib/wash-customers";
 import {quickWash} from "@/lib/quick-wash";
 import {operationsOnly,videoAnalysisEnabled} from "@/lib/features";
 import {dailyStatistics} from "@/lib/statistics";
-import {createBay,updateBay,saveCameraIp,registerCameraIp,saveCameraBayMappings,saveCameraCalibration,platformBayScope} from "@/lib/bay-management";
+import {createBay,updateBay,saveCameraIp,registerCameraIp,saveCameraBayMappings,saveCameraCalibration,removeCameraIp,platformBayScope} from "@/lib/bay-management";
 import {platformBays,platformStart,platformWashTransition,platformAdjustWashMinutes,platformWashExtraService} from "@/lib/platform-operations";
 import {adjustWashMinutes,addWashExtraService,removeWashExtraService,sendWashComment,setWashDiscount,sendOwnerMessage} from '@/lib/wash-extras';
 import {listAccounts,updateAccountCredentials} from '@/lib/account-admin';
@@ -605,6 +605,7 @@ async function handle(req: Request, context: Context) {
     }
     if(resource==='cameras'&&path[4]==='calibration'&&method==='POST')return response(await saveCameraCalibration(await tenant(actor,orgId,'tenant.manage_cameras'),path[3],await body()));
     if(resource==='cameras'&&path[4]==='bays'&&method==='PATCH')return response(await saveCameraBayMappings(await tenant(actor,orgId,'tenant.manage_cameras'),path[3],await body()));
+    if(resource==='cameras'&&id&&method==='DELETE')return response(await removeCameraIp(await tenant(actor,orgId,'tenant.manage_cameras'),id));
     if (resource === "bays" && method === "POST") {
       return response(await createBay(await tenant(actor, orgId, "tenant.manage_bays"), await body()), 201);
     }

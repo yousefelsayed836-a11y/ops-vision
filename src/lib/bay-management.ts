@@ -32,6 +32,10 @@ export async function registerCameraIp(scope:Scope,raw:unknown){
   return {id:camera.id,alreadyExists:false};
  });
 }
+export async function removeCameraIp(scope:Scope,cameraId:string){
+ assert(scope.permissions.includes('tenant.manage_cameras'),'FORBIDDEN',403);z.uuid().parse(cameraId);
+ return transaction(async tx=>{const camera=await tx.camera.findFirst({where:{id:cameraId,orgId:scope.orgId,org:{status:'ACTIVE'}}});assert(camera,'NOT_FOUND',404);branchScope(scope,camera.branchId);const result=await tx.camera.update({where:{id:camera.id},data:{ipAddress:null,status:'UNCONFIGURED',processingEnabled:false}});await audit(tx,scope.actor.id,'camera.ip_removed','camera',camera.id,scope.orgId);return {id:result.id};});
+}
 const cameraBayMappingInput=z.object({bays:z.array(z.object({bayId:z.uuid(),number:z.coerce.number().int().min(1).max(999)})).max(100)});
 export async function saveCameraBayMappings(scope:Scope,cameraId:string,raw:unknown){
  assert(scope.permissions.includes('tenant.manage_cameras'),'FORBIDDEN',403);z.uuid().parse(cameraId);

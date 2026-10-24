@@ -591,5 +591,5 @@
   "removeExtraService":"Remove service","ownerMessageBody":"Write your message",
   "expectedMinutes":"Expected minutes",
   "downloadReportPdf":"Download wash report","fromDate":"From","toDate":"To","downloadPdf":"Download PDF",
-  "pushPermissionHelp":"Enable app alerts for wash messages, overdue washes and camera reviews.","enableNotifications":"Enable alerts","notificationsEnabled":"Alerts enabled on this device","notificationsBlocked":"Allow alerts in your browser settings","notificationsFailed":"Could not enable alerts. Please try again."
+  "pushPermissionHelp":"Enable app alerts for wash messages, overdue washes and camera reviews.","enableNotifications":"Enable alerts","notificationsEnabled":"Alerts enabled on this device","notificationsBlocked":"Allow alerts in your browser settings","notificationsFailed":"Could not enable alerts. Please try again.","testNotifications":"Test notification"
 }

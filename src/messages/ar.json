@@ -591,5 +591,5 @@
   "removeExtraService":"حذف الخدمة","ownerMessageBody":"اكتب رسالتك",
   "expectedMinutes":"المدة المتوقعة بالدقائق",
   "downloadReportPdf":"تنزيل تقرير الغسيل","fromDate":"من تاريخ","toDate":"إلى تاريخ","downloadPdf":"تنزيل PDF",
-  "pushPermissionHelp":"فعّل تنبيهات التطبيق لرسائل الغسيل والتأخير ومراجعة الكاميرا.","enableNotifications":"تفعيل التنبيهات","notificationsEnabled":"التنبيهات مفعّلة على هذا الجهاز","notificationsBlocked":"اسمح بالتنبيهات من إعدادات المتصفح","notificationsFailed":"تعذر تفعيل التنبيهات. حاول مرة أخرى."
+  "pushPermissionHelp":"فعّل تنبيهات التطبيق لرسائل الغسيل والتأخير ومراجعة الكاميرا.","enableNotifications":"تفعيل التنبيهات","notificationsEnabled":"التنبيهات مفعّلة على هذا الجهاز","notificationsBlocked":"اسمح بالتنبيهات من إعدادات المتصفح","notificationsFailed":"تعذر تفعيل التنبيهات. حاول مرة أخرى.","testNotifications":"اختبار التنبيه"
 }

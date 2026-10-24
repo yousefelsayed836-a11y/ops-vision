@@ -318,6 +318,10 @@ export async function transitionWash(
       },
     });
     assert(updated.count === 1, "STALE_VERSION", 409);
+    if (to === "COMPLETED" && wash.paymentStatus !== "PAID") {
+      await tx.payment.create({data:{orgId:scope.orgId,washId:id,amount:wash.price,currency:wash.currency,method:"AUTO_COMPLETION",recordedBy:scope.actor.id}});
+      await tx.wash.update({where:{id},data:{paymentStatus:"PAID"}});
+    }
     if (["COMPLETED", "CANCELLED"].includes(to) && wash.bayId)
       await tx.washBay.updateMany({
         where: { id: wash.bayId, orgId: scope.orgId, activeWashId: id },

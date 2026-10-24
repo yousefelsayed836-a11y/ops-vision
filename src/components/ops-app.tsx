@@ -402,8 +402,7 @@ export function OpsApp({ view }: { view: string }) {
     async (selected: string) => {
       try {
         if (selected) {
-          setData(await api<Snapshot>(`tenants/${selected}/snapshot`));
-          setPlatformData(null);
+          const snapshot=await api<Snapshot>(`tenants/${selected}/snapshot`); setData(snapshot); setPlatformData(null); if(snapshot.role!=="CUSTOMER") setTab(snapshot.permissions.includes("wash.view_sessions")?"operations":"branches");
         } else {
           setPlatformData(await api<PlatformData>("platform"));
           setData(null);

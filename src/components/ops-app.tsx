@@ -1783,17 +1783,6 @@ export function OpsApp({ view }: { view: string }) {
                                 {t("assignWorker")}
                               </button>
                             )}
-                          {has("finance.manage_payments") &&
-                            !data.org.isDemo &&
-                            w.paymentStatus !== "PAID" &&
-                            w.status !== "CANCELLED" && (
-                              <button
-                                className="text-button"
-                                onClick={() => pay(w)}
-                              >
-                                {t("payment")}
-                              </button>
-                            )}
                           <button
                             className="text-button"
                             disabled={w.paymentStatus !== "PAID"}

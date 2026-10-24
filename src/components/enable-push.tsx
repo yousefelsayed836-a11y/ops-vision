@@ -20,5 +20,5 @@ export function EnablePush(){
   const json=subscription.toJSON();await api('push-subscription','POST',{endpoint:subscription.endpoint,keys:json.keys});setStatus('enabled');
  }catch{setStatus('error');}finally{setBusy(false);}}
  if(status==='unsupported')return null;
- return <div className="push-permission"><span>{t('pushPermissionHelp')}</span>{status!=='enabled'&&status!=='blocked'&&<button type="button" className="button outline compact" disabled={busy} onClick={()=>void enable()}>{t('enableNotifications')}</button>}{status==='enabled'&&<small role="status">{t('notificationsEnabled')}</small>}{status==='blocked'&&<small role="status">{t('notificationsBlocked')}</small>}{status==='error'&&<small role="alert">{t('notificationsFailed')}</small>}</div>;
+ return <div className="push-permission" aria-live="polite">{status!=='enabled'&&status!=='blocked'&&<button type="button" className="button outline compact" disabled={busy} onClick={()=>void enable()}>{t('enableNotifications')}</button>}{status==='enabled'&&<small role="status">{t('notificationsEnabled')}</small>}{status==='blocked'&&<small role="status">{t('notificationsBlocked')}</small>}{status==='error'&&<small role="alert">{t('notificationsFailed')}</small>}</div>;
 }

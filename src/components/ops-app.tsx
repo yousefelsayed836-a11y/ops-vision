@@ -1259,9 +1259,7 @@ export function OpsApp({ view }: { view: string }) {
             >
               <span className="hamburger-icon" aria-hidden="true"><i /><i /><i /></span>
             </button>
-            <span>{t("dashboard")}</span>
-
-            <strong>{t(tab)}</strong>
+            <strong>{me?.user.name ?? "OpsVision"}</strong>
           </div>
           <div className="header-controls">{me && <EnablePush/>}
             {me && (isPlatform || me.memberships.length > 0) && (

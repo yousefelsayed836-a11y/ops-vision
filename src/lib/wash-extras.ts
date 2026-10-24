@@ -11,11 +11,11 @@ export async function adjustWashMinutes(scope:Scope,id:string,raw:unknown){
  assert(scope.permissions.includes('wash.start_session'),'FORBIDDEN',403);
  return transaction(async tx=>{
   const wash=await tx.wash.findFirst({where:{id,orgId:scope.orgId}});assert(wash,'NOT_FOUND',404);branchScope(scope,wash.branchId);
-  assert(active.includes(wash.status),'WASH_NOT_ACTIVE',409);
-  const next=wash.estimatedMinutes*60+wash.timeAdjustmentSeconds+deltaSeconds;assert(next>=30&&next<=86400,'INVALID_DURATION',422);
-  const updated=await tx.wash.update({where:{id:wash.id},data:{timeAdjustmentSeconds:{increment:deltaSeconds},version:{increment:1}}});
-  await audit(tx,scope.actor.id,'wash.time_adjusted','wash',id,scope.orgId,{deltaSeconds,totalSeconds:next});
-  return {estimatedMinutes:updated.estimatedMinutes,timeAdjustmentSeconds:updated.timeAdjustmentSeconds,version:updated.version};
+  assert(active.includes(wash.status),'WASH_NOT_ACTIVE',409);assert(wash.startedAt,'WASH_NOT_STARTED',409);
+  const now=Date.now();const nextStartedAt=new Date(wash.startedAt.getTime()-deltaSeconds*1000);assert(nextStartedAt.getTime()<=now,'INVALID_START_TIME',422);
+  const updated=await tx.wash.update({where:{id:wash.id},data:{startedAt:nextStartedAt,version:{increment:1}}});
+  await audit(tx,scope.actor.id,'wash.time_adjusted','wash',id,scope.orgId,{deltaSeconds,startedAt:nextStartedAt.toISOString()});
+  return {startedAt:updated.startedAt,estimatedMinutes:updated.estimatedMinutes,timeAdjustmentSeconds:updated.timeAdjustmentSeconds,version:updated.version};
  });
 }
 export async function addWashExtraService(scope:Scope,id:string,raw:unknown){
@@ -105,3 +105,4 @@ export async function sendOwnerMessage(scope:Scope,raw:unknown){
   return {id:notice.id};
  });
 }
+

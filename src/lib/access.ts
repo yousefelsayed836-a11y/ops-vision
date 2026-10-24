@@ -51,10 +51,13 @@ export async function tenant(
   const custom = await db.role.findUnique({
     where: { orgId_name: { orgId, name: member.role } },
   });
-  const permissions = member.role === "OWNER"
+  const basePermissions = member.role === "OWNER"
     ? (custom?.permissions ?? roles.OWNER).filter((permission) => roles.OWNER.includes(permission as (typeof roles.OWNER)[number]))
     : custom?.permissions ?? roles[member.role] ?? [];
-  assert(!permission || permissions.includes(permission), "FORBIDDEN", 403);
+  // Keep service controls for managers whose custom role predates these permissions.
+  const permissions = member.role === "MANAGER"
+    ? [...new Set([...basePermissions, "tenant.manage_services", "wash.manage_services"])]
+    : basePermissions;
   return {
     actor,
     orgId,

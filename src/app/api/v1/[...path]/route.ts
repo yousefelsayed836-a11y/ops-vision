@@ -157,6 +157,10 @@ async function handle(req: Request, context: Context) {
         403,
       );
       const granted = grantedPlatformPermissions(actor);
+      if(path[1]==='organizations'&&path[3]==='services'&&path.length===5&&method==='DELETE'){
+        platform(actor,'platform.manage_tenants');
+        return response(await removeService(actor,z.uuid().parse(path[2]),z.uuid().parse(path[4])));
+      }
       if(path[1]==='organizations'&&path[3]==='services'&&method==='POST'){
         const orgId=z.uuid().parse(path[2]);
         const data=serviceInput.parse(await body());

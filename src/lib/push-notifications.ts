@@ -18,7 +18,7 @@ export async function removePushSubscription(actor:Actor,raw:unknown){const {end
 
 export async function checkOverdueWashes(){
  const now=new Date();const active=await db.wash.findMany({where:{status:{in:['WASHING','PAUSED','INSPECTION']},startedAt:{not:null},org:{status:'ACTIVE'}},select:{id:true,orgId:true,startedAt:true,estimatedMinutes:true,timeAdjustmentSeconds:true,org:{select:{name:true}},bay:{select:{name:true}}}});
- for(const wash of active){const deadline=wash.startedAt!.getTime()+wash.estimatedMinutes*60000+wash.timeAdjustmentSeconds*1000;if(now.getTime()<deadline)continue;const message=`تأخرت غسلة ${wash.org.name} - ${wash.bay?.name??'الحوض'} عن المدة المتوقعة.`;
+ for(const wash of active){const deadline=wash.startedAt!.getTime()+wash.estimatedMinutes*60000-wash.timeAdjustmentSeconds*1000;if(now.getTime()<deadline)continue;const message=`تأخرت غسلة ${wash.org.name} - ${wash.bay?.name??'الحوض'} عن المدة المتوقعة.`;
   await db.notification.upsert({where:{sourceKey:`wash-overdue:${wash.id}:tenant`},create:{sourceKey:`wash-overdue:${wash.id}:tenant`,orgId:wash.orgId,permission:'tenant.manage_profile',type:'WASH_OVERDUE',message},update:{}});
   await db.notification.upsert({where:{sourceKey:`wash-overdue:${wash.id}:platform`},create:{sourceKey:`wash-overdue:${wash.id}:platform`,orgId:null,permission:'platform.manage_tenants',type:'WASH_OVERDUE',message},update:{}});
  }

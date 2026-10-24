@@ -145,8 +145,8 @@ export async function createWash(scope: Scope, raw: unknown, startImmediately=fa
       403,
     );
     const taxable = subtotal.minus(discount);
-    const taxAmount = taxable.mul(service.taxRate).div(100).toDecimalPlaces(2);
-    const price = taxable.plus(taxAmount);
+    const taxAmount = new Prisma.Decimal(0);
+    const price = taxable;
     const start = data.bookedFor ? new Date(data.bookedFor) : undefined;
     const end = start
       ? new Date(start.getTime() + serviceMinutes * 60000)

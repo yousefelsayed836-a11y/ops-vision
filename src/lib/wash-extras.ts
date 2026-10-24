@@ -31,15 +31,14 @@ export async function addWashExtraService(scope:Scope,id:string,raw:unknown){
   rules.sort((a,b)=>(Number(b.category!=='ALL')*2+Number(b.size!=='ALL'))-(Number(a.category!=='ALL')*2+Number(a.size!=='ALL')));
   const base=rules[0]?.price??service.price;
   const serviceMinutes=rules[0]?.durationMinutes??service.durationMinutes;
-  const tax=base.mul(service.taxRate).div(100).toDecimalPlaces(2);
-  const price=base.plus(tax);
+
+  const price=base;
   assert((wash.estimatedMinutes+serviceMinutes)*60+wash.timeAdjustmentSeconds<=86400,'INVALID_DURATION',422);
   const extra=await tx.washExtraService.create({data:{id:randomUUID(),orgId:scope.orgId,washId:id,serviceId,nameAr:service.nameAr,nameEn:service.nameEn,price,durationMinutes:serviceMinutes,addedById:scope.actor.id}});
   const nextSubtotal=wash.subtotal.plus(base);
-  const oldTaxable=wash.subtotal.minus(wash.discount);
-  const oldFullTax=oldTaxable.isZero()?new Prisma.Decimal(0):wash.taxAmount.mul(wash.subtotal).div(oldTaxable);
+
   const nextTaxable=nextSubtotal.minus(wash.discount);
-  const nextTax=nextSubtotal.isZero()?new Prisma.Decimal(0):oldFullTax.plus(tax).mul(nextTaxable).div(nextSubtotal).toDecimalPlaces(2);
+  const nextTax=new Prisma.Decimal(0);
   await tx.wash.update({where:{id},data:{subtotal:nextSubtotal,taxAmount:nextTax,price:nextTaxable.plus(nextTax),estimatedMinutes:{increment:serviceMinutes},version:{increment:1}}});
   await audit(tx,scope.actor.id,'wash.extra_service_added','wash',id,scope.orgId,{serviceId,extraId:extra.id,price:String(price)});
   return {id:extra.id,nameAr:extra.nameAr,nameEn:extra.nameEn,price:String(extra.price),durationMinutes:extra.durationMinutes};
@@ -53,14 +52,12 @@ export async function removeWashExtraService(scope:Scope,id:string,extraId:strin
   assert(wash.paymentStatus==='UNPAID','PAYMENT_ALREADY_RECORDED',409);
   const extra=await tx.washExtraService.findFirst({where:{id:extraId,washId:id,orgId:scope.orgId}});assert(extra,'NOT_FOUND',404);
   const service=await tx.washService.findFirst({where:{id:extra.serviceId,orgId:scope.orgId}});assert(service,'NOT_FOUND',404);
-  const base=extra.price.div(new Prisma.Decimal(1).plus(service.taxRate.div(100))).toDecimalPlaces(2);
+  const base=extra.price;
   const nextSubtotal=wash.subtotal.minus(base);
   const nextDiscount=Prisma.Decimal.min(wash.discount,nextSubtotal);
-  const oldTaxable=wash.subtotal.minus(wash.discount);
-  const oldFullTax=oldTaxable.isZero()?new Prisma.Decimal(0):wash.taxAmount.mul(wash.subtotal).div(oldTaxable);
-  const extraTax=extra.price.minus(base);
+
   const taxable=nextSubtotal.minus(nextDiscount);
-  const nextTax=nextSubtotal.isZero()?new Prisma.Decimal(0):Prisma.Decimal.max(0,oldFullTax.minus(extraTax)).mul(taxable).div(nextSubtotal).toDecimalPlaces(2);
+  const nextTax=new Prisma.Decimal(0);
   await tx.washExtraService.delete({where:{id:extraId}});
   await tx.wash.update({where:{id},data:{subtotal:nextSubtotal,discount:nextDiscount,taxAmount:nextTax,price:taxable.plus(nextTax),estimatedMinutes:{decrement:extra.durationMinutes},version:{increment:1}}});
   await audit(tx,scope.actor.id,'wash.extra_service_removed','wash',id,scope.orgId,{extraId});
@@ -88,10 +85,9 @@ export async function setWashDiscount(scope:Scope,id:string,raw:unknown){
   assert(wash.paymentStatus==='UNPAID','PAYMENT_ALREADY_RECORDED',409);
   const amount=new Prisma.Decimal(discount);
   assert(amount.lte(wash.subtotal),'DISCOUNT_EXCEEDS_TOTAL',422);
-  const oldTaxable=wash.subtotal.minus(wash.discount);
-  const fullTax=oldTaxable.isZero()?new Prisma.Decimal(0):wash.taxAmount.mul(wash.subtotal).div(oldTaxable);
+
   const taxable=wash.subtotal.minus(amount);
-  const tax=wash.subtotal.isZero()?new Prisma.Decimal(0):fullTax.mul(taxable).div(wash.subtotal).toDecimalPlaces(2);
+  const tax=new Prisma.Decimal(0);
   const updated=await tx.wash.update({where:{id},data:{discount:amount,taxAmount:tax,price:taxable.plus(tax),version:{increment:1}}});
   await audit(tx,scope.actor.id,'wash.discount_changed','wash',id,scope.orgId,{discount:String(amount)});
   return {discount:String(updated.discount),price:String(updated.price),version:updated.version};

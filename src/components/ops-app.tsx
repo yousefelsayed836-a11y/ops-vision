@@ -431,7 +431,7 @@ export function OpsApp({ view }: { view: string }) {
           result.user.platformRole,
         )
           ? ""
-          : (result.memberships[0]?.orgId ?? "");
+          : (result.memberships.length === 1 ? (result.memberships[0]?.orgId ?? "") : "");
         setOrgId(selected);
         if (
           selected ||

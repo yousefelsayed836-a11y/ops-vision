@@ -1,7 +1,4 @@
 "use client";
-
-  const initialOrgSelection = useRef(new Set<string>());
-"use client";
 import {washCatalog,vehicleCategoryLabel,vehicleCategories} from "@/lib/catalog";
 import {saudiDateTime} from "@/lib/saudi-time";
 import {PlatformBays} from "./platform-bays";

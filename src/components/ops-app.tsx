@@ -1735,7 +1735,7 @@ export function OpsApp({ view }: { view: string }) {
                     {washes.map((w) => (
                       <article className="panel wash-card" key={w.id}>
                         <div className="section-title">
-                          <span className="plate">{vehicleCategoryLabel(w.vehicle.category, locale,data.vehicleCategories)}</span>
+                          <Image className={`dashboard-bay-car wash-card-car ${w.vehicle.category==='SEDAN'?'sedan-facing-left':''}`} src={vehicleImages[w.vehicle.category]??vehicleImages.SEDAN} alt={vehicleCategoryLabel(w.vehicle.category,locale,data.vehicleCategories)} width={150} height={75}/><span className="plate">{vehicleCategoryLabel(w.vehicle.category, locale,data.vehicleCategories)}</span>
                           <Badge value={w.status} label={state(w.status)} />
                         </div>
                         <h3>

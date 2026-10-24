@@ -3,7 +3,7 @@ import {useState} from 'react';
 import {useLocale,useTranslations} from 'next-intl';
 import {api} from '@/lib/client';
 
-function keyBytes(value:string){const raw=atob(value.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,char=>char.charCodeAt(0));}
+function keyBytes(value:string){const base=value.replace(/-/g,'+').replace(/_/g,'/');const padded=base+'='.repeat((4-base.length%4)%4);const raw=atob(padded);return Uint8Array.from(raw,char=>char.charCodeAt(0));}
 export function EnablePush(){
  const t=useTranslations(),locale=useLocale();
  const [status,setStatus]=useState<'idle'|'enabled'|'blocked'|'unsupported'|'error'>(()=>{

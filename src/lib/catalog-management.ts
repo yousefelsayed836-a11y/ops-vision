@@ -16,7 +16,7 @@ export async function categoryExists(tx:Tx,orgId:string,value:string){
 }
 
 export async function catalogManager(actor:Actor,orgId:string){
- if(isPlatformAdmin(actor.platformRole)&&(actor.platformRole==='SUPER_ADMIN'||actor.platformPermissions?.includes('platform.manage_tenants'))){
+ if(isPlatformAdmin(actor.platformRole)){
   platform(actor,'platform.manage_tenants');
   assert(await db.organization.findFirst({where:{id:orgId,status:'ACTIVE'}}),'NOT_FOUND',404);
  }else { const scope=await tenant(actor,orgId); assert(scope.permissions.includes('tenant.manage_services')||scope.permissions.includes('wash.manage_services'),'FORBIDDEN',403); }

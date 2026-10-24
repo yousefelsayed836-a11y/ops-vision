@@ -157,6 +157,17 @@ async function handle(req: Request, context: Context) {
         403,
       );
       const granted = grantedPlatformPermissions(actor);
+      if(path[1]==='organizations'&&path[3]==='services'&&method==='POST'){
+        const orgId=z.uuid().parse(path[2]);
+        const data=serviceInput.parse(await body());
+        assert(await db.organization.findFirst({where:{id:orgId,status:'ACTIVE'}}),'NOT_FOUND',404);
+        return response(await transaction(async tx=>{
+          assert(await categoryExists(tx,orgId,data.category),'INVALID_CATEGORY',422);
+          const record=await tx.washService.create({data:{...data,orgId}});
+          await audit(tx,actor.id,'service.created','service',record.id,orgId);
+          return record;
+        }),201);
+      }
       if(path[1]==='washes'&&path[3]==='transition'&&method==='POST')return response(await platformWashTransition(actor,z.uuid().parse(path[2]),await body()));
       if(path[1]==='washes'&&path[3]==='time'&&method==='POST')return response(await platformAdjustWashMinutes(actor,z.uuid().parse(path[2]),await body()));
       if(path[1]==='washes'&&path[3]==='extra-services'&&method==='POST')return response(await platformWashExtraService(actor,z.uuid().parse(path[2]),await body()),201);

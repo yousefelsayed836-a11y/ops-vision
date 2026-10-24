@@ -919,7 +919,8 @@ async function handle(req: Request, context: Context) {
       );
     }
     if (resource === "organization-settings" && method === "PATCH") {
-      await tenant(actor, orgId, "tenant.manage_profile");
+      const settingsScope = await tenant(actor, orgId);
+      assert(settingsScope.permissions.includes("tenant.manage_profile") || settingsScope.permissions.includes("tenant.manage_services") || settingsScope.permissions.includes("wash.manage_services"), "FORBIDDEN", 403);
       const data = z
         .object({
           name: text,
@@ -1099,4 +1100,5 @@ export const GET = handle;
 export const POST = handle;
 export const PATCH = handle;
 export const DELETE = handle;
+
 

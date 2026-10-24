@@ -888,7 +888,7 @@ export function OpsApp({ view }: { view: string }) {
           ...(canPlatform("platform.manage_users") ? ["team"] : []),
           ...(me?.user.platformRole==='SUPER_ADMIN'?['accounts']:[]),
           "installApp",
-          ...(has("tenant.manage_profile") ? ["organizationSettingsTab"] : []),
+          ...((has("tenant.manage_profile")||manageServices()) ? ["organizationSettingsTab"] : []),
         ]
       : isCustomer
         ? [
@@ -896,7 +896,7 @@ export function OpsApp({ view }: { view: string }) {
             "operations",
             "services",
             "installApp",
-            ...(has("tenant.manage_profile") ? ["organizationSettingsTab"] : []),
+            ...((has("tenant.manage_profile")||manageServices()) ? ["organizationSettingsTab"] : []),
           ]
         : [
             "overview",
@@ -913,7 +913,7 @@ export function OpsApp({ view }: { view: string }) {
             "notifications",
             "installApp",
             ...(data?.role==='OWNER'?['contactPlatform']:[]),
-            ...(has("tenant.manage_profile") ? ["organizationSettingsTab"] : []),
+            ...((has("tenant.manage_profile")||manageServices()) ? ["organizationSettingsTab"] : []),
           ];
   const date = (value: string) => saudiDateTime(value,locale);
   const minutes = (ms: number) =>
@@ -2107,7 +2107,7 @@ export function OpsApp({ view }: { view: string }) {
                   )}
                 </div>
               )}
-              {tab === "organizationSettingsTab" && has("tenant.manage_profile") && data && <div className="panel"><button className="button primary" onClick={settingsForm}>{t("organizationSettings")}</button><form className="management-notice-form" onSubmit={event=>{event.preventDefault();const message=String(new FormData(event.currentTarget).get('message')??'');void run(()=>api(`tenants/${orgId}/notice`,'PATCH',{message}));}}><label className="field">{t('customerNotice')}<input name="message" maxLength={240} defaultValue={data.org.publicNotice} placeholder={t('customerNoticePlaceholder')}/></label><button className="button outline" disabled={busy}>{t('save')}</button></form></div>}
+              {tab === "organizationSettingsTab" && (has("tenant.manage_profile")||manageServices()) && data && <div className="panel"><button className="button primary" onClick={settingsForm}>{t("organizationSettings")}</button><form className="management-notice-form" onSubmit={event=>{event.preventDefault();const message=String(new FormData(event.currentTarget).get('message')??'');void run(()=>api(`tenants/${orgId}/notice`,'PATCH',{message}));}}><label className="field">{t('customerNotice')}<input name="message" maxLength={240} defaultValue={data.org.publicNotice} placeholder={t('customerNoticePlaceholder')}/></label><button className="button outline" disabled={busy}>{t('save')}</button></form></div>}
               {tab === "contactPlatform" && data?.role==='OWNER' && <div className="panel"><h2>{t('contactPlatform')}</h2><form className="form-fields" onSubmit={event=>{event.preventDefault();const form=event.currentTarget;const message=String(new FormData(form).get('message')??'');void run(async()=>{await api(`tenants/${orgId}/owner-message`,'POST',{message});form.reset();window.alert(t('messageSent'));});}}><label className="field">{t('ownerMessageBody')}<textarea name="message" minLength={2} maxLength={1000} required rows={5}/></label><button className="button primary" disabled={busy}>{t('sendOwnerMessage')}</button></form></div>}
 
             </>
@@ -2141,6 +2141,7 @@ export function OpsApp({ view }: { view: string }) {
     </div>
   );
 }
+
 
 
 

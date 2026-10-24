@@ -392,7 +392,7 @@ export function OpsApp({ view }: { view: string }) {
       const code = error instanceof ApiError ? error.code : "";
       setToast({
         text:
-          code && t.has(`errors.${code}`) ? t(`errors.${code}`) : t("error"),
+          code && t.has(`errors.${code}`) ? `${t(`errors.${code}`)} (${code})` : `${t("error")} (${code||"UNKNOWN"})`,
         error: true,
       });
     },

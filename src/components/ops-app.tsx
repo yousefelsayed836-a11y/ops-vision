@@ -1671,7 +1671,7 @@ export function OpsApp({ view }: { view: string }) {
                             {t("price")}
                           </button>
                         )}
-                        {has('tenant.manage_services')&&<button className="text-button danger" onClick={()=>{if(window.confirm(t('confirm'))){void run(()=>api(`tenants/${orgId}/services/${service.id}`,'DELETE',{}));}}}>{t('remove')}</button>}
+                        {has('tenant.manage_services')&&<button className="button outline compact danger" onClick={()=>{if(window.confirm(t('confirm'))){void run(()=>api(`tenants/${orgId}/services/${service.id}`,'DELETE',{}));}}}>{t('removeExtraService')}</button>}
                         {has('tenant.manage_services')&&<ServicePricingEditor key={`${service.id}-${service.pricingRules.length}`} basePrice={service.price} baseDuration={service.durationMinutes} rules={service.pricingRules} custom={data.vehicleCategories} serviceCategory={service.category} onSave={async prices=>{await api(`tenants/${orgId}/services/${service.id}/prices`,'POST',{prices});await refresh();}}/>}
                       </article>
                     ))}

@@ -261,7 +261,6 @@ function ReceiptDialog({
       {[
         ["subtotal", record.subtotal],
         ["discount", record.discount],
-        ["tax", record.tax],
         ["total", record.total],
       ].map(([label, value]) => (
         <div className="receipt-detail" key={label}>

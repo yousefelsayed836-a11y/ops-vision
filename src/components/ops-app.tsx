@@ -1635,6 +1635,7 @@ export function OpsApp({ view }: { view: string }) {
                     </div>)}
                   </div>
                   {has("tenant.manage_services")&&<div className="panel"><h3>{t('catalogTitle')}</h3><p className="muted">{t('catalogHelp')}</p><div className="button-row">{washCatalog.map(item=><button key={item.ar} className="button outline compact" onClick={()=>openForm('newService',[{...field('nameAr'),default:item.ar},{...field('nameEn'),default:item.en},{...field('price','number'),min:0,step:'0.01'},{...field('duration','number'),name:'durationMinutes',min:1,max:1440}],'services',v=>({...v,category:'ALL',taxRate:'0'}))}>{locale==='ar'?item.ar:item.en}</button>)}</div></div>}
+                  {has('tenant.manage_services')&&data.vehicleCategories.some(item=>item.code.startsWith('CUSTOM_'))&&<div className="panel"><h3>{t('vehicleCategories')}</h3><div className="button-row">{data.vehicleCategories.filter(item=>item.code.startsWith('CUSTOM_')).map(item=><span className="badge" key={item.code}>{locale==='ar'?item.nameAr:item.nameEn}<button type="button" className="text-button danger" onClick={()=>{if(window.confirm(t('confirm'))){void run(()=>api(`tenants/${orgId}/vehicle-categories/${item.code}`,'DELETE',{}));}}}>{t('remove')}</button></span>)}</div></div>}
                   <div className="service-grid">
                     {data.services.map((service) => (
                       <article className="panel service-card" key={service.id}>

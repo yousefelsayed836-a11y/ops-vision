@@ -118,7 +118,7 @@ export async function activatePlatformStaff(raw: unknown) {
         id,
         name: pending.name,
         email: pending.email,
-        emailVerified: true,
+        emailVerified: false,
         platformRole: "PLATFORM_ADMIN",
         platformPermissions: pending.permissions,
         platformCreatedBy: issuer.id,

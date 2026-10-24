@@ -37,7 +37,8 @@ export async function dispatchPushNotifications(){
  for(const sub of subscriptions){const user=userById.get(sub.userId);if(!user||user.disabled)continue;
   for(const notice of notifications){if(notice.createdAt<sub.createdAt)continue;if(notice.recipientId&&notice.recipientId!==sub.userId)continue;
    let eligible=false;
-   if(notice.orgId===null)eligible=user.platformRole==='SUPER_ADMIN'||user.platformRole==='PLATFORM_ADMIN'&&user.platformPermissions.includes(notice.permission);
+   if(notice.recipientId)eligible=notice.recipientId===sub.userId;
+   else if(notice.orgId===null)eligible=user.platformRole==='SUPER_ADMIN'||user.platformRole==='PLATFORM_ADMIN'&&user.platformPermissions.includes(notice.permission);
    else {const member=memberships.find(item=>item.userId===sub.userId&&item.orgId===notice.orgId);if(member){const role=customRoles.find(item=>item.orgId===member.orgId&&item.name===member.role);eligible=(role?.permissions??roles[member.role]??[]).includes(notice.permission as never);}}
    if(!eligible)continue;
    const existing=await db.pushDelivery.findUnique({where:{subscriptionId_notificationId:{subscriptionId:sub.id,notificationId:notice.id}}});if(existing)continue;

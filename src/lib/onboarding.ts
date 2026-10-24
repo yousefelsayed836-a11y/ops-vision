@@ -215,7 +215,7 @@ export async function activate(raw: unknown) {
           id: userId,
           email: invite.email,
           name: invite.name,
-          emailVerified: true,
+          emailVerified: false,
           accounts: {
             create: {
               id: randomUUID(),

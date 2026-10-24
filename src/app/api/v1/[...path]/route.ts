@@ -226,7 +226,7 @@ async function handle(req: Request, context: Context) {
               ? db.notification.findMany({
                   where: {
                     orgId: null,
-                    permission: {in:granted.includes('platform.manage_tenants')?['platform.review_applications','platform.manage_tenants']:['platform.review_applications']},
+                    OR:[{recipientId:actor.id},{recipientId:null,permission:{in:granted.includes('platform.manage_tenants')?['platform.review_applications','platform.manage_tenants']:['platform.review_applications']}}],
                   },
                   orderBy: { createdAt: "desc" },
                   take: 50,

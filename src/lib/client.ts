@@ -1,6 +1,7 @@
 "use client";
 import { createAuthClient } from "better-auth/react";
-export const authClient = createAuthClient();
+import {emailOTPClient} from "better-auth/client/plugins";
+export const authClient = createAuthClient({plugins:[emailOTPClient()]});
 export class ApiError extends Error {
   constructor(public code: string) {
     super(code);

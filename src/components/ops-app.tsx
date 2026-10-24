@@ -497,6 +497,9 @@ export function OpsApp({ view }: { view: string }) {
           email: String(values.email),
           password: String(values.password),
         });
+        if(result.error?.code==='EMAIL_NOT_VERIFIED'){
+          setModal({title:locale==='ar'?'تأكيد البريد الإلكتروني':'Verify email',description:locale==='ar'?'أرسلنا كودًا من 6 أرقام إلى بريدك. صالح لمدة 10 دقائق.':'Enter the six digit code sent to your email.',fields:[{name:'otp',label:locale==='ar'?'كود التأكيد':'Verification code',required:true}],submit:locale==='ar'?'تأكيد وتسجيل الدخول':'Verify and sign in',execute:async v=>{const verified=await authClient.emailOtp.verifyEmail({email:String(values.email),otp:v.otp});if(verified.error)throw new Error(verified.error.message);const login=await authClient.signIn.email({email:String(values.email),password:String(values.password)});if(login.error)throw new Error(login.error.message);router.push(href('dashboard'));router.refresh();}});return;
+        }
         if (result.error) {
           setToast({
             text:

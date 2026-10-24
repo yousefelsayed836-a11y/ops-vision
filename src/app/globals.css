@@ -1889,3 +1889,5 @@ td code {
 .hamburger-icon{display:inline-flex;flex-direction:column;gap:4px;width:20px}.hamburger-icon i{display:block;height:2px;width:20px;background:currentColor;border-radius:2px}.header-controls .push-permission{margin:0;max-width:260px}
 
 .management-search,.management-ip-form{display:none!important}
+
+.compact-active-wash{display:grid;grid-template-columns:76px 1fr;align-items:center;gap:10px;padding:10px}.compact-active-wash .dashboard-bay-car{width:76px;height:42px;object-fit:contain}.active-wash-summary{display:grid;gap:3px;font-size:13px}.active-wash-summary span{color:var(--muted)}.compact-active-wash .wash-activity{grid-column:1/-1;margin-top:4px;padding-top:8px}.compact-active-wash .wash-activity-time{justify-content:space-between;gap:8px}.compact-active-wash .wash-time-controls{justify-content:center;gap:6px}.compact-active-wash .wash-time-controls .button-row{display:flex;gap:4px}.compact-active-wash .wash-time-controls .button{font-size:12px;padding:6px 8px}

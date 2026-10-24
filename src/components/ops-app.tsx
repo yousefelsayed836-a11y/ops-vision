@@ -612,13 +612,6 @@ export function OpsApp({ view }: { view: string }) {
           })),
           default: "ALL",
         },
-        {
-          ...field("taxRate", "number"),
-          default: "0",
-          min: 0,
-          max: 99.99,
-          step: "0.01",
-        },
       ],
       "services",
     );

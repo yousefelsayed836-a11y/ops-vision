@@ -21,8 +21,8 @@ export function PlatformBays({canStart,canFinish=false,canManageBays=false,canMa
  useEffect(()=>{if(selected&&startDialog.current&&!startDialog.current.open)startDialog.current.showModal();},[selected]);
  const load=useCallback(async()=>{try{setData(await api<Data>('platform/bays'));setMessage('');setUpdatedAt(new Date().toISOString());}catch(error){const code=error instanceof ApiError?error.code:null;setMessage(code==='UNAUTHENTICATED'?ui('errors.UNAUTHENTICATED'):code==='FORBIDDEN'?ui('errors.FORBIDDEN'):`${t('error')} (${code??'NETWORK_ERROR'})`);}},[t,ui]);
  useEffect(()=>{const initial=setTimeout(()=>void load(),0),timer=setInterval(()=>void load(),15000);return()=>{clearTimeout(initial);clearInterval(timer);};},[load]);
- async function start(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!selected)return;setBusy(true);setMessage('');try{const v=Object.fromEntries(new FormData(e.currentTarget));await api('platform/start-wash','POST',{orgId:selected.orgId,bayId:selected.id,serviceId:v.serviceId,vehicle:{category}});setSelected(null);await load();setMessage(t('started'));}catch{setMessage(t('error'));}finally{setBusy(false);}}
- async function manage(path:string,method:string,body:unknown){setBusy(true);setMessage('');try{await api(path,method,body);await load();setMessage(t('saved'));}catch{setMessage(t('error'));}finally{setBusy(false);}}
+ async function start(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!selected)return;setBusy(true);setMessage('');try{const v=Object.fromEntries(new FormData(e.currentTarget));await api('platform/start-wash','POST',{orgId:selected.orgId,bayId:selected.id,serviceId:v.serviceId,vehicle:{category}});setSelected(null);await load();setMessage(t('started'));}catch(error){setMessage(error instanceof ApiError?`${t('error')} (${error.code})`:t('error'));}finally{setBusy(false);}}
+ async function manage(path:string,method:string,body:unknown){setBusy(true);setMessage('');try{await api(path,method,body);await load();setMessage(t('saved'));}catch(error){setMessage(error instanceof ApiError?`${t('error')} (${error.code})`:t('error'));}finally{setBusy(false);}}
  const formatTime=(value:string)=>saudiTime(value,locale);
  const groups=(data?.organizations??[]).map((org,index)=>{const all=data?.bays.filter(b=>b.orgId===org.id)??[];return {org,all,bays:all,tone:index%2?'blue':'pink'};}); return <div className="wash-management">
   <section className="panel management-toolbar"><div><h2>{t('title')}</h2>{updatedAt&&<small className="muted">{t('updated')}: {formatTime(updatedAt)}</small>}</div><button className="button outline" type="button" onClick={()=>void load()}>{t('refresh')}</button></section>
@@ -49,6 +49,7 @@ export function PlatformBays({canStart,canFinish=false,canManageBays=false,canMa
   {data&&(data.bays.length===data.limit||data.organizations.length===data.limit)&&<p>{t('limit')}</p>}
  </div>;
 }
+
 
 
 

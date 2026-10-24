@@ -1322,7 +1322,7 @@ export function OpsApp({ view }: { view: string }) {
             <StateEmpty title={t("noMembership")} />
           ) : (
             <>
-              {['overview','reports','platformReports'].includes(tab)&&((!orgId&&canPlatform('platform.view_reports'))||(!!orgId&&!isCustomer&&(has('reports.view')||has('wash.view_sessions'))))&&<ReportDownload orgId={orgId||undefined}/>}
+              {['overview','reports'].includes(tab)&&!!orgId&&!isCustomer&&(has('reports.view')||has('wash.view_sessions'))&&<ReportDownload orgId={orgId}/>}
               {tab === "overview" && (
                 <>
                   {dateControl}

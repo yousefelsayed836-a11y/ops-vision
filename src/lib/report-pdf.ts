@@ -16,6 +16,7 @@ export async function reportPdf(actor:Actor,raw:unknown){
  const end=reportingDay(query.to,'Asia/Riyadh').end;
  assert(start<end&&end.getTime()-start.getTime()<=366*86400000,'INVALID_REPORT_RANGE',422);
  const orgId=query.orgId;
+ assert(orgId,'ORG_REQUIRED',422);
  let branchId:string|null=null;
  if(isPlatformAdmin(actor.platformRole))platform(actor,'platform.view_reports');
  else{

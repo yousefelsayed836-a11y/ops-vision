@@ -47,3 +47,9 @@ export async function dispatchPushNotifications(){
   }
  }
 }
+
+export async function sendTestPush(actor:Actor){
+ configure(); const subscriptions=await db.pushSubscription.findMany({where:{userId:actor.id}}); let sent=0;
+ for(const sub of subscriptions){try{await webpush.sendNotification({endpoint:sub.endpoint,keys:{p256dh:sub.p256dh,auth:sub.auth}},JSON.stringify({title:'OpsVision',body:'اختبار التنبيهات ناجح',url:'/ar/dashboard'}),{TTL:300});sent++;}catch(error){const code=typeof error==='object'&&error&&'statusCode' in error?Number(error.statusCode):0;if(code===404||code===410)await db.pushSubscription.delete({where:{id:sub.id}});}}
+ return {sent};
+}

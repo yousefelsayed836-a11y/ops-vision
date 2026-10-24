@@ -63,7 +63,7 @@ import { audit, transaction } from "@/lib/transactions";
 import { canDelegate, roles } from "@/lib/permissions";
 import { feedback, receipt } from "@/lib/customer";
 import {queueVideo, listVideos, getVideo, reviewVideo, videoFile, readVideoUpload} from "@/lib/video-analysis";
-import {addVehicleCategory,catalogManager,categoryExists,saveServicePrices} from "@/lib/catalog-management";
+import {addVehicleCategory,catalogManager,categoryExists,saveServicePrices,removeService,removeVehicleCategory} from "@/lib/catalog-management";
 
 type Context = { params: Promise<{ path: string[] }> };
 async function handle(req: Request, context: Context) {
@@ -125,6 +125,7 @@ async function handle(req: Request, context: Context) {
     if(path[0]==='push-key'&&method==='GET'&&path.length===1)return response(publicPushKey());
     if(path[0]==='push-subscription'&&path.length===1&&method==='POST'){await rateLimit('push-subscription',actor.id,10,3600);return response(await savePushSubscription(actor,await body()),201);}
     if(path[0]==='push-subscription'&&path.length===1&&method==='DELETE')return response(await removePushSubscription(actor,await body()));
+    if(path[0]==='push-test'&&path.length===1&&method==='POST'){const {sendTestPush}=await import('@/lib/push-notifications');return response(await sendTestPush(actor));}
     if(path[0]==='report-pdf'&&method==='GET'&&path.length===1){const url=new URL(req.url);const file=await reportPdf(actor,{from:url.searchParams.get('from'),to:url.searchParams.get('to'),orgId:url.searchParams.get('orgId')||undefined});return new Response(new Uint8Array(file),{headers:{'Content-Type':'application/pdf','Content-Disposition':'attachment; filename="opsvision-wash-report.pdf"','Cache-Control':'no-store'}});}
     if (path.join("/") === "me" && method === "GET") {
       const user = await db.user.findUniqueOrThrow({
@@ -610,6 +611,7 @@ async function handle(req: Request, context: Context) {
       return response(await createBay(await tenant(actor, orgId, "tenant.manage_bays"), await body()), 201);
     }
     if(resource==='vehicle-categories'&&method==='POST')return response(await addVehicleCategory(actor,orgId,await body()),201);
+    if(resource==='vehicle-categories'&&id&&method==='DELETE')return response(await removeVehicleCategory(actor,orgId,id));
     if(resource==='services'&&id&&path[4]==='prices'&&method==='POST')return response(await saveServicePrices(actor,orgId,id,await body()));
     if (resource === "services" && method === "POST") {
       await catalogManager(actor,orgId);
@@ -633,6 +635,7 @@ async function handle(req: Request, context: Context) {
         201,
       );
     }
+    if (resource === "services" && id && method === "DELETE") return response(await removeService(actor,orgId,id));
     if (resource === "services" && method === "PATCH") {
       await catalogManager(actor,orgId);
       const data = serviceInput.partial().parse(await body());

@@ -50,3 +50,6 @@ export async function saveServicePrices(actor:Actor,orgId:string,serviceId:strin
   return tx.servicePricingRule.findMany({where:{orgId,serviceId,size:'ALL'}});
  });
 }
+
+export async function removeService(actor:Actor,orgId:string,serviceId:string){await catalogManager(actor,orgId);z.uuid().parse(serviceId);return transaction(async tx=>{const service=await tx.washService.findFirst({where:{id:serviceId,orgId}});assert(service,'NOT_FOUND',404);const result=await tx.washService.update({where:{id:serviceId},data:{active:false}});await audit(tx,actor.id,'service.archived','service',serviceId,orgId);return result;});}
+export async function removeVehicleCategory(actor:Actor,orgId:string,categoryId:string){await catalogManager(actor,orgId);z.uuid().parse(categoryId);return transaction(async tx=>{const category=await tx.vehicleCategory.findFirst({where:{id:categoryId,orgId}});assert(category,'NOT_FOUND',404);const result=await tx.vehicleCategory.update({where:{id:categoryId},data:{active:false}});await audit(tx,actor.id,'vehicle_category.archived','vehicle_category',categoryId,orgId);return result;});}

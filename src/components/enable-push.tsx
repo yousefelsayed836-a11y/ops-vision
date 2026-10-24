@@ -11,7 +11,7 @@ export function EnablePush(){
   if(!('Notification'in window)||!('serviceWorker'in navigator)||!('PushManager'in window))return 'unsupported';
   return Notification.permission==='denied'?'blocked':'idle';
  });
- const [busy,setBusy]=useState(false);
+ const [busy,setBusy]=useState(false);const [testMessage,setTestMessage]=useState('');
  async function enable(){setBusy(true);try{
   const permission=await Notification.requestPermission();if(permission!=='granted'){setStatus('blocked');return;}
   const registration=await navigator.serviceWorker.register('/dashboard-sw.js',{scope:`/${locale}/dashboard`});
@@ -20,5 +20,5 @@ export function EnablePush(){
   const json=subscription.toJSON();await api('push-subscription','POST',{endpoint:subscription.endpoint,keys:json.keys});setStatus('enabled');
  }catch{setStatus('error');}finally{setBusy(false);}}
  if(status==='unsupported')return null;
- return <div className="push-permission" aria-live="polite">{status!=='enabled'&&status!=='blocked'&&<button type="button" className="button outline compact" disabled={busy} onClick={()=>void enable()}>{t('enableNotifications')}</button>}{status==='enabled'&&<><small role="status">{t('notificationsEnabled')}</small><button type="button" className="button outline compact" onClick={()=>new Notification('OpsVision',{body:t('testNotifications')})}>{t('testNotifications')}</button></>}{status==='blocked'&&<small role="status">{t('notificationsBlocked')}</small>}{status==='error'&&<small role="alert">{t('notificationsFailed')}</small>}</div>;
+ return <div className="push-permission" aria-live="polite">{status!=='enabled'&&status!=='blocked'&&<button type="button" className="button outline compact" disabled={busy} onClick={()=>void enable()}>{t('enableNotifications')}</button>}{status==='enabled'&&<><small role="status">{t('notificationsEnabled')}</small><button type="button" className="button outline compact" disabled={busy} onClick={async()=>{setBusy(true);setTestMessage('');try{const result=await api<{sent:number}>('push-test','POST',{});setTestMessage(result.sent?t('testNotificationSent'):t('notificationsFailed'));}catch{setTestMessage(t('notificationsFailed'));}finally{setBusy(false);}}}>{t('testNotifications')}</button>{testMessage&&<small role="status">{testMessage}</small>}</>}{status==='blocked'&&<small role="status">{t('notificationsBlocked')}</small>}{status==='error'&&<small role="alert">{t('notificationsFailed')}</small>}</div>;
 }

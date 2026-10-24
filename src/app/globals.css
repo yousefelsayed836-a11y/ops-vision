@@ -1895,3 +1895,5 @@ td code {
 .wash-card{display:grid;gap:10px}.wash-card-car{width:120px;height:58px;object-fit:contain;align-self:center}.wash-card .wash-timing{display:none}.wash-card .wash-activity{margin-top:4px}
 
 .wash-overdue{border:2px solid #c94b5b;background:#fff0f2;border-radius:10px;padding:10px}.management-active-wash:has(.wash-overdue){background:#ffe3e7;border:2px solid #c94b5b}
+
+.report-financial-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem;margin:.8rem 0}.report-financial-grid>div{background:#eef8f4;border:1px solid #cde7dc;border-radius:.7rem;padding:.7rem;display:grid;gap:.25rem}.report-financial-grid strong{font-size:1.2rem}

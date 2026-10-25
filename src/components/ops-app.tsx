@@ -1,4 +1,5 @@
 "use client";
+import {ContractGate,ContractsPanel} from './contracts-panel';
 import {washCatalog,vehicleCategoryLabel,vehicleCategories} from "@/lib/catalog";
 import {saudiDateTime} from "@/lib/saudi-time";
 import {PlatformBays} from "./platform-bays";
@@ -77,7 +78,7 @@ function StateEmpty({ title }: { title: string }) {
     </div>
   );
 }
-function Field({ field,selectedCategory,onCategoryChange }: { field: FormField;selectedCategory?:string;onCategoryChange?:(value:string)=>void }) {
+function Field({ field,selectedCategory,onCategoryChange,signIn=false }: { field: FormField;signIn?:boolean;selectedCategory?:string;onCategoryChange?:(value:string)=>void }) {
   const locale = useLocale();
   if (field.type === "vehicle-category") return <VehicleCategoryPicker name={field.name} label={field.label} locale={locale} value={selectedCategory} defaultValue={field.default} onChange={onCategoryChange} custom={field.customCategories}/>;
   if (field.type === "service-choice") return <ServiceChoicePicker name={field.name} label={field.label} options={field.options??[]} category={selectedCategory??'SEDAN'} currency={field.currency}/>;
@@ -142,9 +143,9 @@ function Field({ field,selectedCategory,onCategoryChange }: { field: FormField;s
           min={field.min}
           max={field.max}
           step={field.step}
-          minLength={field.type === "password" ? 12 : undefined}
+          minLength={field.type === "password"&&!signIn ? 12 : undefined}
           maxLength={field.type === "password" ? 128 : 1000}
-          autoComplete={field.type === "password" ? "new-password" : "off"}
+          autoComplete={field.type === "password" ? (signIn?"current-password":"new-password") : field.type==='email'?'username':"off"}
         />
       )}
     </label>
@@ -495,21 +496,18 @@ export function OpsApp({ view }: { view: string }) {
         setReceipt(result.id);
       } else if (view === "login") {
         const result = await authClient.signIn.email({
-          email: String(values.email),
+          email: String(values.email).trim().toLowerCase(),
           password: String(values.password),
         });
         if (result.error) {
           setToast({
             text:
-              locale === "ar"
-                ? "بيانات الدخول غير صحيحة أو الحساب غير متاح."
-                : "Invalid credentials or unavailable account.",
+              result.error.status===429?(locale==='ar'?'محاولات كثيرة، انتظر دقيقة ثم حاول مجددًا.':'Too many attempts. Wait a minute and retry.'):(locale==='ar'?'راجع البريد وكلمة المرور أو اطلب من المدير ضبط الحساب.':'Check your email and password or ask the administrator to reset the account.'),
             error: true,
           });
           return;
         }
-        router.push(href("dashboard"));
-        router.refresh();
+        window.location.assign(href("dashboard"));
       } else if (view === "activate") {
         await api(
           token.startsWith("reset=") ? "reset-password" : "activate",
@@ -881,11 +879,12 @@ export function OpsApp({ view }: { view: string }) {
   const navigation =
     !orgId && isPlatform
       ? [
-          ...(canPlatform("platform.manage_tenants") ? ["organizations"] : []),
+          ...(canPlatform("platform.manage_tenants") ? ["organizations","contracts"] : []),
           ...(canPlatform("platform.view_bays") ? ["allBaysTitle"] : []),
           ...(canPlatform("platform.review_applications")
-            ? ["applications", "notifications"]
-            : canPlatform('platform.manage_tenants')?['notifications']:[]),
+            ? ["applications"]
+            : []),
+          "notifications",
           ...(canPlatform("platform.view_reports") ? ["platformReports"] : []),
           ...(canPlatform("platform.manage_users") ? ["team"] : []),
           ...(canPlatform('platform.manage_users')?['accounts']:[]),
@@ -914,6 +913,7 @@ export function OpsApp({ view }: { view: string }) {
             
             "notifications",
             "installApp",
+            "contract",
             ...(data?.role==='OWNER'?['contactPlatform']:[]),
             ...((has("tenant.manage_profile")||manageServices()) ? ["organizationSettingsTab"] : []),
           ];
@@ -1118,7 +1118,7 @@ export function OpsApp({ view }: { view: string }) {
                     <>
                       <Field field={field("email", "email")} />
                       {view === "login" && (
-                        <Field field={field("password", "password")} />
+                        <Field signIn field={field("password", "password")} />
                       )}
                     </>
                   )}
@@ -1139,14 +1139,7 @@ export function OpsApp({ view }: { view: string }) {
                               : "login",
                     )}
                   </button>
-                  {view === "login" && (
-                    <Link
-                      className="subtle-link"
-                      href={href("forgot-password")}
-                    >
-                      {t("forgot")}
-                    </Link>
-                  )}
+                  {view==='login'&&<p className="muted">{locale==='ar'?'لتغيير كلمة المرور تواصل مع مدير النظام.':'Contact the system administrator to change your password.'}</p>}
                   {view === "activate" && token && (
                     <button
                       type="button"
@@ -1276,7 +1269,7 @@ export function OpsApp({ view }: { view: string }) {
             </button>
           </div>
         </header>
-        <main className="workspace"><InstallApp active={tab === "installApp"}/>
+        <main className="workspace"><ContractGate key={orgId} orgId={orgId} skip={!orgId||isPlatform||isCustomer} showContract={tab==='contract'}><InstallApp active={tab === "installApp"}/>
           <div className="page-title">
             <div>
               <h1>{tab === "overview" ? t("workspaceTitle") : t(tab)}</h1>
@@ -1544,6 +1537,7 @@ export function OpsApp({ view }: { view: string }) {
                 </div>
               )}
               {tab === "allBaysTitle" && !orgId && <PlatformBays canStart={canPlatform("platform.operate_washes")} canFinish={canPlatform("platform.complete_washes")} canManageBays={canPlatform("platform.manage_bays")} canManageCameras={canPlatform("platform.manage_cameras")} canManageCatalog={canPlatform("platform.manage_tenants")} />}
+              {tab==='contracts'&&!orgId&&canPlatform('platform.manage_tenants')&&<ContractsPanel/>}
               {tab === "platformReports" && !orgId && canPlatform('platform.view_reports') && <PlatformWashReports/>}
               {tab === "organizations" && platformData && (
                 <>
@@ -2107,7 +2101,7 @@ export function OpsApp({ view }: { view: string }) {
 
             </>
           )}
-        </main>
+        </ContractGate></main>
         <footer className="workspace-footer">
           <Logo variant="pink" />
         </footer>

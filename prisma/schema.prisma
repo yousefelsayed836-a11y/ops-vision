@@ -18,6 +18,7 @@ model User {
   disabled Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  contractAcceptances ContractAcceptance[]
   sessions Session[]
   accounts Account[]
   memberships Membership[]
@@ -75,6 +76,7 @@ model Organization {
   publicNotice String @default("")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  contractAcceptances ContractAcceptance[]
   memberships Membership[]
   branches Branch[]
   bays WashBay[]
@@ -625,4 +627,21 @@ model CameraVisit {
  @@unique([orgId,episodeKey])
  @@index([orgId,branchId,createdAt])
  @@index([orgId,streamKey,status])
+}
+
+model ContractAcceptance {
+ id String @id @default(uuid())
+ orgId String
+ userId String
+ version String
+ signerName String
+ signerEmail String
+ organizationName String
+ terms Json
+ termsHash String
+ acceptedAt DateTime @default(now())
+ org Organization @relation(fields:[orgId],references:[id],onDelete:Restrict)
+ user User @relation(fields:[userId],references:[id],onDelete:Restrict)
+ @@unique([orgId,userId,version])
+ @@index([orgId,acceptedAt])
 }

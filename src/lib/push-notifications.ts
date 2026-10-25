@@ -28,23 +28,23 @@ export async function dispatchPushNotifications(){
  configure();
  const [subscriptions,notifications,users,memberships,customRoles]=await Promise.all([
   db.pushSubscription.findMany(),
-  db.notification.findMany({where:{createdAt:{gte:new Date(Date.now()-7*86400000)}},orderBy:{createdAt:'asc'},take:500}),
+  db.notification.findMany({where:{createdAt:{gte:new Date(Date.now()-7*86400000)}},orderBy:{createdAt:'desc'},take:500}),
   db.user.findMany({select:{id:true,disabled:true,platformRole:true,platformPermissions:true}}),
   db.membership.findMany({where:{active:true,org:{status:'ACTIVE'}},select:{userId:true,orgId:true,role:true}}),
   db.role.findMany({select:{orgId:true,name:true,permissions:true}}),
  ]);
  const userById=new Map(users.map(user=>[user.id,user]));
  for(const sub of subscriptions){const user=userById.get(sub.userId);if(!user||user.disabled)continue;
-  for(const notice of notifications){if(notice.createdAt<sub.createdAt)continue;if(notice.recipientId&&notice.recipientId!==sub.userId)continue;
+  for(const notice of [...notifications].reverse()){if(notice.readBy.includes(sub.userId)||notice.createdAt<sub.createdAt)continue;if(notice.recipientId&&notice.recipientId!==sub.userId)continue;
    let eligible=false;
    if(notice.recipientId)eligible=notice.recipientId===sub.userId;
    else if(notice.orgId===null)eligible=user.platformRole==='SUPER_ADMIN'||user.platformRole==='PLATFORM_ADMIN'&&user.platformPermissions.includes(notice.permission);
    else {const member=memberships.find(item=>item.userId===sub.userId&&item.orgId===notice.orgId);if(member){const role=customRoles.find(item=>item.orgId===member.orgId&&item.name===member.role);eligible=(role?.permissions??roles[member.role]??[]).includes(notice.permission as never);}}
    if(!eligible)continue;
-   const existing=await db.pushDelivery.findUnique({where:{subscriptionId_notificationId:{subscriptionId:sub.id,notificationId:notice.id}}});if(existing)continue;
-   const delivery=await db.pushDelivery.create({data:{subscriptionId:sub.id,notificationId:notice.id}});
+   const existing=await db.pushDelivery.findUnique({where:{subscriptionId_notificationId:{subscriptionId:sub.id,notificationId:notice.id}}});if(existing?.status==='SENT')continue;
+   const delivery=existing??await db.pushDelivery.create({data:{subscriptionId:sub.id,notificationId:notice.id}});
    try{await webpush.sendNotification({endpoint:sub.endpoint,keys:{p256dh:sub.p256dh,auth:sub.auth}},JSON.stringify({title:'OpsVision',body:notice.message,notificationId:notice.id,unreadCount:notifications.filter(n=>!n.readBy.includes(sub.userId)&&(n.recipientId===sub.userId||!n.recipientId&&n.orgId===notice.orgId&&n.permission===notice.permission)).length,url:'/ar/dashboard'}),{TTL:3600});await db.pushDelivery.update({where:{id:delivery.id},data:{status:'SENT'}});}
-   catch(error){const code=typeof error==='object'&&error&&'statusCode'in error?Number(error.statusCode):0;await db.pushDelivery.update({where:{id:delivery.id},data:{status:'FAILED'}});if(code===404||code===410)await db.pushSubscription.deleteMany({where:{id:sub.id}});}
+   catch(error){const code=typeof error==='object'&&error&&'statusCode'in error?Number(error.statusCode):0;await db.pushDelivery.update({where:{id:delivery.id},data:{status:'FAILED'}});if(code===404||code===410){await db.pushSubscription.deleteMany({where:{id:sub.id}});break;}}
   }
  }
 }

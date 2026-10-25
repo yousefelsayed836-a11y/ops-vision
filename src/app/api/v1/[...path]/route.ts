@@ -1,3 +1,4 @@
+import {accountContract,signContract,requireContract,listContracts} from '@/lib/contracts';
 import {listCameraVisits,reviewCameraVisit} from '@/lib/camera-visits';
 import {listWashCustomers,quickCustomer} from "@/lib/wash-customers";
 import {quickWash} from "@/lib/quick-wash";
@@ -39,15 +40,12 @@ import {
   activate,
   acceptInvitation,
   inviteMember,
-  requestReset,
-  resetPassword,
 } from "@/lib/onboarding";
 import {
   branchInput,
   serviceInput,
   cameraInput,
   ruleInput,
-  email,
   text,
 } from "@/lib/validation";
 import {
@@ -101,17 +99,7 @@ async function handle(req: Request, context: Context) {
           : activate(data)),
       );
     }
-    if (path.join("/") === "reset-password" && method === "POST") {
-      await rateLimit("password-reset", "global", 50, 60);
-      return response(await resetPassword(await body()));
-    }
-    if (path.join("/") === "forgot-password" && method === "POST") {
-      const data = await body();
-      const recipient = email.parse(data.email);
-      await rateLimit("reset", "global", 100, 3600);
-      await rateLimit("reset-email", recipient, 3, 3600);
-      return response(await requestReset({ email: recipient }));
-    }
+    if(['reset-password','forgot-password'].includes(path.join('/')))return response({error:'ADMIN_PASSWORD_ONLY'},403);
     if(path[0]==="tracking"&&z.uuid().safeParse(path[1]).success){
       const id=path[1],cookieName=`opsvision.track.${id}`;
       if(method==="POST"&&path[2]==="login"){
@@ -157,6 +145,7 @@ async function handle(req: Request, context: Context) {
         403,
       );
       const granted = grantedPlatformPermissions(actor);
+      if(path[1]==='contracts'&&path.length===2&&method==='GET')return response(await listContracts(actor));
       if(path[1]==='organizations'&&path[3]==='wash-duration'&&path.length===4&&method==='PATCH'){
         platform(actor,'platform.manage_tenants');const orgId=z.uuid().parse(path[2]);const data=z.object({defaultWashMinutes:z.coerce.number().int().min(1).max(1440)}).parse(await body());
         return response(await transaction(async tx=>{const record=await tx.organization.update({where:{id:orgId},data});await audit(tx,actor.id,'organization.wash_duration_changed','organization',orgId,orgId,data);return {defaultWashMinutes:record.defaultWashMinutes};}));
@@ -226,16 +215,14 @@ async function handle(req: Request, context: Context) {
                   take: 30,
                 })
               : [],
-            granted.includes("platform.review_applications") || granted.includes("platform.manage_tenants")
-              ? db.notification.findMany({
+            db.notification.findMany({
                   where: {
                     orgId: null,
                     OR:[{recipientId:actor.id},{recipientId:null,permission:{in:granted.includes('platform.manage_tenants')?['platform.review_applications','platform.manage_tenants']:['platform.review_applications']}}],
                   },
                   orderBy: { createdAt: "desc" },
                   take: 50,
-                })
-              : [],
+                }),
           ]);
         return response({
           permissions: granted,
@@ -249,12 +236,10 @@ async function handle(req: Request, context: Context) {
         });
       }
       if (path[1] === "notifications" && method === "PATCH") {
-        assert(['platform.review_applications','platform.manage_tenants'].some(permission=>granted.includes(permission)),'FORBIDDEN',403);
         const record = await db.notification.findFirst({
           where: {
             id: path[2],
-            orgId: null,
-            permission: {in:granted.includes('platform.manage_tenants')?['platform.review_applications','platform.manage_tenants']:['platform.review_applications']},
+            OR:[{recipientId:actor.id},{orgId:null,recipientId:null,permission:{in:granted.includes('platform.manage_tenants')?['platform.review_applications','platform.manage_tenants']:granted.includes('platform.review_applications')?['platform.review_applications']:[]}}],
           },
         });
         assert(record, "NOT_FOUND", 404);
@@ -348,6 +333,8 @@ async function handle(req: Request, context: Context) {
     );
     const orgId = path[1];
     const resource = path[2];
+    if(resource==='contract'&&path.length===3){if(method==='GET')return response(await accountContract(actor,orgId));if(method==='POST')return response(await signContract(actor,orgId,await body()));}
+    if(method!=='GET')await requireContract(actor,orgId);
     if(resource==='owner-message'&&method==='POST'&&path.length===3){await rateLimit('owner-message',actor.id,10,3600);return response(await sendOwnerMessage(await tenant(actor,orgId),await body()),201);}
     if(resource==='wash-report'&&method==='GET')return response(await tenantWashReport(await tenant(actor,orgId,'reports.view'),new URL(req.url).searchParams.get('date')||'all'));
     if(resource==='notice'&&method==='PATCH')return response(await savePublicNotice(actor,orgId,await body()));
@@ -1096,9 +1083,7 @@ async function handle(req: Request, context: Context) {
       const notification = await db.notification.findFirst({
         where: {
           id,
-          orgId,
-          permission: { in: [...scope.permissions] },
-          OR: [{ recipientId: null }, { recipientId: actor.id }],
+          OR:[{recipientId:actor.id},{orgId,recipientId:null,permission:{in:[...scope.permissions]}}],
         },
       });
       assert(notification, "NOT_FOUND", 404);

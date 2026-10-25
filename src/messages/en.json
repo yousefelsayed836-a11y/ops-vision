@@ -249,6 +249,8 @@
   "tenantIsolationText": "Each account has access based on its role in the car wash.",
   "externalNotice": "Camera connections, online payments and external messaging are not available yet.",
   "errors": {
+    "CONTRACT_REQUIRED": "Please sign the account agreement first.",
+    "ADMIN_PASSWORD_ONLY": "Only the system administrator can change passwords.",
     "INVALID_CATEGORY": "The selected vehicle category is not available.",
     "UNAUTHENTICATED": "Sign in to continue.",
     "FORBIDDEN": "You do not have permission for this action.",
@@ -589,5 +591,7 @@
   "remove":"Remove","removeExtraService":"Remove service","ownerMessageBody":"Write your message",
   "expectedMinutes":"Expected minutes",
   "downloadReportPdf":"Download wash report","fromDate":"From","toDate":"To","downloadPdf":"Download PDF",
-  "pushPermissionHelp":"Enable app alerts for wash messages, overdue washes and camera reviews.","enableNotifications":"Enable alerts","notificationsEnabled":"Alerts enabled on this device","notificationsBlocked":"Allow alerts in your browser settings","notificationsFailed":"Could not enable alerts. Please try again.","testNotifications":"Test notification","testNotificationSent":"Push test sent"
+  "pushPermissionHelp":"Enable app alerts for wash messages, overdue washes and camera reviews.","enableNotifications":"Enable alerts","notificationsEnabled":"Alerts enabled on this device","notificationsBlocked":"Allow alerts in your browser settings","notificationsFailed":"Could not enable alerts. Please try again.","testNotifications":"Test notification","testNotificationSent":"Push test sent",
+  "contract": "Usage agreement",
+  "contracts": "Agreements"
 }

@@ -1,9 +1,9 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { db } from "./db";
-import { seal } from "./crypto";
 export const auth = betterAuth({
   appName: "OpsVision",
+  disabledPaths:['/change-password','/set-password','/request-password-reset','/reset-password','/forget-password'],
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   database: prismaAdapter(db, { provider: "postgresql", transaction: true }),
   secret: process.env.BETTER_AUTH_SECRET,
@@ -16,22 +16,7 @@ export const auth = betterAuth({
     maxPasswordLength: 128,
     revokeSessionsOnPasswordReset: true,
     resetPasswordTokenExpiresIn: 3600,
-    sendResetPassword: async ({ user, token }) => {
-      const member = await db.membership.findFirst({
-        where: { userId: user.id, active: true },
-      });
-      await db.outbox.create({
-        data: {
-          orgId: member?.orgId,
-          kind: "PASSWORD_RESET",
-          recipient: user.email,
-          encryptedPayload: seal({
-            token,
-            activationPath: "/ar/activate#reset=",
-          }),
-        },
-      });
-    },
+
   },
   session: {
     expiresIn: 60 * 60 * 12,
@@ -57,7 +42,7 @@ export const auth = betterAuth({
       create: {
         after: async(session)=>{
           const user=await db.user.findUnique({where:{id:session.userId}});if(!user)return;
-          await db.notification.create({data:{recipientId:user.id,type:'LOGIN',permission:'',message:'تم تسجيل دخول جديد إلى حسابك في OpsVision في '+new Intl.DateTimeFormat('ar-EG',{timeZone:'Africa/Cairo',dateStyle:'medium',timeStyle:'short'}).format(new Date())+'.'}});
+          try{await db.notification.create({data:{recipientId:user.id,type:'LOGIN',permission:'',message:'تم تسجيل دخول جديد إلى حسابك في OpsVision في '+new Intl.DateTimeFormat('ar-EG',{timeZone:'Africa/Cairo',dateStyle:'medium',timeStyle:'short'}).format(new Date())+'.'}});}catch(error){console.error('Login notification failed',error instanceof Error?error.message:'unknown');}
         },
         before: async (session) => {
           const user = await db.user.findUnique({

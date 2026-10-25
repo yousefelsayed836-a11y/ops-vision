@@ -249,6 +249,8 @@
   "tenantIsolationText": "كل حساب له صلاحيات محددة حسب دوره في المغسلة.",
   "externalNotice": "ربط الكاميرات والدفع الإلكتروني والرسائل الخارجية غير متاح حاليًا.",
   "errors": {
+    "CONTRACT_REQUIRED": "وقّع اتفاقية الحساب أولًا.",
+    "ADMIN_PASSWORD_ONLY": "تغيير كلمة المرور من صلاحية مدير النظام فقط.",
     "UNAUTHENTICATED": "سجّل الدخول للمتابعة.",
     "FORBIDDEN": "ليست لديك صلاحية هذا الإجراء.",
     "APPLICATION_EXISTS": "يوجد طلب مسجل لهذا البريد بالفعل.",
@@ -589,5 +591,7 @@
   "remove":"حذف","removeExtraService":"حذف الخدمة","ownerMessageBody":"اكتب رسالتك",
   "expectedMinutes":"المدة المتوقعة بالدقائق",
   "downloadReportPdf":"تنزيل تقرير الغسيل","fromDate":"من تاريخ","toDate":"إلى تاريخ","downloadPdf":"تنزيل PDF",
-  "pushPermissionHelp":"فعّل تنبيهات التطبيق لرسائل الغسيل والتأخير ومراجعة الكاميرا.","enableNotifications":"تفعيل التنبيهات","notificationsEnabled":"التنبيهات مفعّلة على هذا الجهاز","notificationsBlocked":"اسمح بالتنبيهات من إعدادات المتصفح","notificationsFailed":"تعذر تفعيل التنبيهات. حاول مرة أخرى.","testNotifications":"اختبار التنبيه","testNotificationSent":"تم إرسال اختبار Push"
+  "pushPermissionHelp":"فعّل تنبيهات التطبيق لرسائل الغسيل والتأخير ومراجعة الكاميرا.","enableNotifications":"تفعيل التنبيهات","notificationsEnabled":"التنبيهات مفعّلة على هذا الجهاز","notificationsBlocked":"اسمح بالتنبيهات من إعدادات المتصفح","notificationsFailed":"تعذر تفعيل التنبيهات. حاول مرة أخرى.","testNotifications":"اختبار التنبيه","testNotificationSent":"تم إرسال اختبار Push",
+  "contract": "اتفاقية الاستخدام",
+  "contracts": "العقود"
 }

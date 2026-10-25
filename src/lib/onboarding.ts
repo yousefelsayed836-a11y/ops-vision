@@ -6,8 +6,6 @@ import { assert } from "./errors";
 import { digest, token, seal } from "./crypto";
 import { platform, type Actor, type Scope, branchScope } from "./access";
 import { roles, canDelegate } from "./permissions";
-import { auth } from "./auth";
-import { z } from "zod";
 import {
   applicationInput,
   applicationDecision,
@@ -176,6 +174,7 @@ export async function activate(raw: unknown) {
       "INVALID_OR_EXPIRED_TOKEN",
       400,
     );
+    assert(invite.purpose!=="RESET","ADMIN_PASSWORD_ONLY",403);
     const org = await tx.organization.findUnique({
       where: { id: invite.orgId },
     });
@@ -376,20 +375,5 @@ export async function inviteMember(scope: Scope, raw: unknown) {
     return result;
   });
 }
-export async function requestReset(raw: unknown) {
-  const data = (await import("zod")).z
-    .object({ email: (await import("./validation")).email })
-    .parse(raw);
-  await auth.api.requestPasswordReset({ body: { email: data.email } });
-  return { accepted: true }; // identical response whether the account exists or not
-}
-export async function resetPassword(raw: unknown) {
-  const data = z
-    .object({
-      token: z.string().min(16).max(256),
-      newPassword: (await import("./validation")).password,
-    })
-    .parse(raw);
-  await auth.api.resetPassword({ body: data });
-  return { reset: true };
-}
+export async function requestReset(_raw:unknown){void _raw;throw new (await import('./errors')).DomainError('ADMIN_PASSWORD_ONLY',403);}
+export async function resetPassword(_raw:unknown){void _raw;throw new (await import('./errors')).DomainError('ADMIN_PASSWORD_ONLY',403);}

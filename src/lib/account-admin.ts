@@ -27,7 +27,7 @@ export async function updateAccountCredentials(actor:Actor,id:string,raw:unknown
    const changed=await tx.account.updateMany({where:{userId:id,providerId:'credential'},data:{password:hashed}});
    if(changed.count===0)await tx.account.create({data:{id:randomUUID(),userId:id,accountId:id,providerId:'credential',password:hashed}});
   }
-  await tx.session.deleteMany({where:{userId:id}});
+  if(hashed||(data.email&&data.email!==user.email))await tx.session.deleteMany({where:{userId:id}});
   await audit(tx,actor.id,'account.credentials_updated','user',id,undefined,{emailChanged:!!data.email&&data.email!==user.email,passwordChanged:!!hashed});
   return {id,email:data.email??user.email};
  });

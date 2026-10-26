@@ -1140,8 +1140,8 @@ td code {
   color: var(--dark);
   border: 1px solid var(--line);
   border-radius: 18px;
-  width: 560px;
-  max-width: calc(100% - 30px);
+  width: min(560px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
   padding: 27px;
   box-shadow: 0 20px 80px #263f5533;
   max-height: 90vh;
@@ -1166,7 +1166,8 @@ td code {
 }
 .invitation-dialog {
   text-align: center;
-  max-width: 470px;
+  width: min(420px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
 }
 .invitation-dialog img {
   margin: 15px auto;
@@ -1907,3 +1908,21 @@ td code {
 .password-input{display:flex;align-items:center;gap:8px;min-width:0}.password-input input{min-width:0;flex:1}.password-input button{flex-shrink:0}
 .app-shell[dir="ltr"]{direction:ltr}.app-shell[dir="rtl"]{direction:rtl}.workspace,.workspace-header,.panel,.form-dialog{min-width:0}.form-fields>.field{min-width:0}.nav-item{overflow-wrap:anywhere}
 @media(max-width:700px){.app-shell[dir="ltr"] .sidebar{transform:translateX(-110%)}.app-shell[dir="rtl"] .sidebar{transform:translateX(110%)}.app-shell .sidebar.sidebar-open{transform:translateX(0)}.password-input{flex-wrap:wrap}.password-input input{flex-basis:65%}}
+
+/* Keep every modal inside narrow viewports, including long activation URLs. */
+.form-dialog{margin:auto;max-height:calc(100dvh - 32px);overscroll-behavior:contain;overflow-wrap:anywhere}
+.form-dialog form,.form-dialog .field,.form-dialog .form-fields{min-width:0;max-width:100%}
+.form-dialog .dialog-heading{align-items:flex-start;gap:10px}
+.form-dialog .dialog-heading h2{flex:1;min-width:0;text-align:start;line-height:1.5}
+.form-dialog .dialog-heading button{flex-shrink:0;min-height:44px;min-width:44px}
+.invitation-dialog img{width:min(180px,100%);height:auto;max-width:100%}
+.form-dialog input,.form-dialog select,.form-dialog textarea{min-width:0;max-width:100%}
+@media screen and (max-width:700px){
+ .form-dialog{width:calc(100vw - 24px);max-width:calc(100vw - 24px);padding:16px;border-radius:14px;max-height:calc(100dvh - 24px)}
+ .form-dialog .dialog-heading{margin-block-end:12px}.form-dialog .dialog-heading h2,.invitation-dialog>h2{font-size:18px}
+ .form-dialog>p{font-size:13px;margin-block-end:12px;line-height:1.65}
+ .form-dialog .form-fields{grid-template-columns:minmax(0,1fr);gap:12px}
+ .invitation-dialog{width:min(360px,calc(100vw - 24px))}.invitation-dialog img{width:min(148px,100%);margin:10px auto}
+ .invitation-dialog input{font-size:16px;padding:10px;min-height:44px}.invitation-dialog>small{font-size:11px;line-height:1.6;display:block;margin-block-start:8px}
+ .form-dialog .button{min-height:44px;padding:9px 12px}.form-dialog .button-row{flex-wrap:wrap}
+}

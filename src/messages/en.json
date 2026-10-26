@@ -593,5 +593,14 @@
   "downloadReportPdf":"Download wash report","fromDate":"From","toDate":"To","downloadPdf":"Download PDF",
   "pushPermissionHelp":"Enable app alerts for wash messages, overdue washes and camera reviews.","enableNotifications":"Enable alerts","notificationsEnabled":"Alerts enabled on this device","notificationsBlocked":"Allow alerts in your browser settings","notificationsFailed":"Could not enable alerts. Please try again.","testNotifications":"Test notification","testNotificationSent":"Push test sent",
   "contract": "Usage agreement",
-  "contracts": "Agreements"
+  "contracts": "Agreements",
+  "savedAccounts": "Accounts saved on this device",
+  "chooseAccount": "Choose an email address",
+  "clearSavedAccounts": "Clear saved accounts",
+  "showPassword": "Show",
+  "hidePassword": "Hide",
+  "savedAccountsHelp": "Email addresses are saved after a successful login on this device only. Passwords are never saved.",
+  "teamAndCustomers": "Team & customers",
+  "branchesAndCameras": "Branches, bays & cameras",
+  "vehicleCategories": "Vehicle types"
 }

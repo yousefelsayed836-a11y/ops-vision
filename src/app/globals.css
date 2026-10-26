@@ -1902,3 +1902,8 @@ td code {
 .compact-active-wash{min-width:0;overflow:hidden}.compact-active-wash .dashboard-bay-car{max-width:100%;min-width:0;grid-column:1;grid-row:1 / span 2}.compact-active-wash h4,.compact-active-wash .active-wash-summary{grid-column:2}@media(max-width:600px){.compact-active-wash{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:8px}.compact-active-wash .dashboard-bay-car{height:110px!important;width:100%!important}.compact-active-wash .wash-activity{grid-column:1/-1}}
 
 .toast[popover]{position:fixed;inset:auto;top:20px;inset-inline-end:20px;bottom:auto;margin:0;border:0;z-index:2147483647}.toast[popover]:popover-open{display:flex}
+
+/* Locale-aware controls and compact account navigation. */
+.password-input{display:flex;align-items:center;gap:8px;min-width:0}.password-input input{min-width:0;flex:1}.password-input button{flex-shrink:0}
+.app-shell[dir="ltr"]{direction:ltr}.app-shell[dir="rtl"]{direction:rtl}.workspace,.workspace-header,.panel,.form-dialog{min-width:0}.form-fields>.field{min-width:0}.nav-item{overflow-wrap:anywhere}
+@media(max-width:700px){.app-shell[dir="ltr"] .sidebar{transform:translateX(-110%)}.app-shell[dir="rtl"] .sidebar{transform:translateX(110%)}.app-shell .sidebar.sidebar-open{transform:translateX(0)}.password-input{flex-wrap:wrap}.password-input input{flex-basis:65%}}

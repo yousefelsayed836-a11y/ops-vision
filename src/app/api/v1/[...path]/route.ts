@@ -235,6 +235,7 @@ async function handle(req: Request, context: Context) {
           notifications,
         });
       }
+      if(path[1]==='notifications'&&path[2]==='read-all'&&method==='PATCH')return response(await db.notification.updateMany({where:{NOT:{readBy:{has:actor.id}},OR:[{recipientId:actor.id},{orgId:null,recipientId:null,permission:{in:granted.includes('platform.manage_tenants')?['platform.review_applications','platform.manage_tenants']:granted.includes('platform.review_applications')?['platform.review_applications']:[]}}]},data:{readBy:{push:actor.id}}}));
       if (path[1] === "notifications" && method === "PATCH") {
         const record = await db.notification.findFirst({
           where: {
@@ -337,6 +338,7 @@ async function handle(req: Request, context: Context) {
     if(method!=='GET')await requireContract(actor,orgId);
     if(resource==='owner-message'&&method==='POST'&&path.length===3){await rateLimit('owner-message',actor.id,10,3600);return response(await sendOwnerMessage(await tenant(actor,orgId),await body()),201);}
     if(resource==='wash-report'&&method==='GET')return response(await tenantWashReport(await tenant(actor,orgId,'reports.view'),new URL(req.url).searchParams.get('date')||'all'));
+    if(resource==='notifications'&&path[3]==='read-all'&&method==='PATCH'){const scope=await tenant(actor,orgId);return response(await db.notification.updateMany({where:{NOT:{readBy:{has:actor.id}},OR:[{recipientId:actor.id},{orgId,recipientId:null,permission:{in:[...scope.permissions]}}]},data:{readBy:{push:actor.id}}}));}
     if(resource==='notice'&&method==='PATCH')return response(await savePublicNotice(actor,orgId,await body()));
     if(resource==='customers'&&method==='GET')return response(await listWashCustomers(await tenant(actor,orgId,'tenant.manage_customers')));
     if(resource==='customers'&&method==='POST')return response(await quickCustomer(await tenant(actor,orgId,'tenant.manage_customers'),await body()),201);

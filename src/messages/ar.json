@@ -593,5 +593,14 @@
   "downloadReportPdf":"تنزيل تقرير الغسيل","fromDate":"من تاريخ","toDate":"إلى تاريخ","downloadPdf":"تنزيل PDF",
   "pushPermissionHelp":"فعّل تنبيهات التطبيق لرسائل الغسيل والتأخير ومراجعة الكاميرا.","enableNotifications":"تفعيل التنبيهات","notificationsEnabled":"التنبيهات مفعّلة على هذا الجهاز","notificationsBlocked":"اسمح بالتنبيهات من إعدادات المتصفح","notificationsFailed":"تعذر تفعيل التنبيهات. حاول مرة أخرى.","testNotifications":"اختبار التنبيه","testNotificationSent":"تم إرسال اختبار Push",
   "contract": "اتفاقية الاستخدام",
-  "contracts": "العقود"
+  "contracts": "العقود",
+  "savedAccounts": "حسابات محفوظة على هذا الجهاز",
+  "chooseAccount": "اختر بريدًا إلكترونيًا",
+  "clearSavedAccounts": "مسح القائمة المحفوظة",
+  "showPassword": "إظهار",
+  "hidePassword": "إخفاء",
+  "savedAccountsHelp": "يُحفظ البريد بعد دخول ناجح على هذا الجهاز فقط، ولا تُحفظ كلمة المرور.",
+  "teamAndCustomers": "الفريق والعملاء",
+  "branchesAndCameras": "الفروع والأحواض والكاميرات",
+  "vehicleCategories": "أنواع المركبات"
 }

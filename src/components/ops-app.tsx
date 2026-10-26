@@ -1,4 +1,5 @@
 "use client";
+import {LoginFields,rememberLoginEmail} from './login-fields';
 import {ContractGate,ContractsPanel} from './contracts-panel';
 import {washCatalog,vehicleCategoryLabel,vehicleCategories} from "@/lib/catalog";
 import {saudiDateTime} from "@/lib/saudi-time";
@@ -19,7 +20,6 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 
 import { Logo } from "./logo";
@@ -249,10 +249,10 @@ function ReceiptDialog({
       </div>
       <h2>{t("receipt")}</h2>
       <p>
-        {record.organization} Â· {record.branch}
+        {record.organization} · {record.branch}
       </p>
       <small>
-        {record.number} Â·{" "}
+        {record.number} ·{" "}
         {saudiDateTime(record.payment.receivedAt,locale)}
       </small>
       <div className="receipt-detail">
@@ -347,7 +347,6 @@ function InvitationDialog({
 export function OpsApp({ view }: { view: string }) {
   const t = useTranslations();
   const locale = useLocale();
-  const router = useRouter();
   const href = (path = "") => `/${locale}${path ? "/" + path : ""}`;
   const [me, setMe] = useState<Me | null>(null);
   const [orgId, setOrgId] = useState("");
@@ -507,6 +506,7 @@ export function OpsApp({ view }: { view: string }) {
           });
           return;
         }
+        rememberLoginEmail(String(values.email).trim().toLowerCase());
         window.location.assign(href("dashboard"));
       } else if (view === "activate") {
         await api(
@@ -900,21 +900,19 @@ export function OpsApp({ view }: { view: string }) {
             ...((has("tenant.manage_profile")||manageServices()) ? ["organizationSettingsTab"] : []),
           ]
         : [
-            "overview",
+            ...(data?.role==='OWNER'?[]:["overview"]),
             ...(has("wash.view_sessions") ? ["operations"] : []),
             ...(has("tenant.manage_branches") || has("tenant.manage_bays")
               ? ["branches"]
               : []),
             ...(manageServices() || data?.role==='MANAGER' ? ["services"] : []),
             ...(has("tenant.manage_employees") ? ["team"] : []),
-            ...(has("tenant.manage_cameras") ? ["cameraIp"] : []),
-            ...(has("tenant.manage_customers") ? ["washCustomers"] : []),
+            ...(has("tenant.manage_cameras")&&data?.role!=='OWNER' ? ["cameraIp"] : []),
+            ...(has("tenant.manage_customers")&&data?.role!=='OWNER' ? ["washCustomers"] : []),
             ...(has("reports.view") ? ["reports"] : []),
             
             "notifications",
-            "installApp",
-            "contract",
-            ...(data?.role==='OWNER'?['contactPlatform']:[]),
+            ...(data?.role==='OWNER'?[]:["installApp","contract"]),
             ...((has("tenant.manage_profile")||manageServices()) ? ["organizationSettingsTab"] : []),
           ];
   const date = (value: string) => saudiDateTime(value,locale);
@@ -980,6 +978,8 @@ export function OpsApp({ view }: { view: string }) {
             ).length ?? 0,
         },
       ];
+  const markingNotifications=useRef(new Set<string>()),notificationVisit=useRef('');
+  useEffect(()=>{if(tab!=='notifications'){notificationVisit.current='';return;}if(!me)return;const rows=data?.notifications??platformData?.notifications??[];const key=orgId||'platform';if((notificationVisit.current===key&&!rows.some(n=>!n.readBy.includes(me.user.id)))||markingNotifications.current.has(key))return;const ids=new Set(rows.map(n=>n.id)),userId=me.user.id;markingNotifications.current.add(key);void api(orgId?'tenants/'+orgId+'/notifications/read-all':'platform/notifications/read-all','PATCH',{}).then(()=>{notificationVisit.current=key;const mark=(item:typeof rows[number])=>ids.has(item.id)?{...item,readBy:[...new Set([...item.readBy,userId])]}:item;if(orgId)setData(value=>value?.org.id===orgId?{...value,notifications:value.notifications.map(mark)}:value);else setPlatformData(value=>value?{...value,notifications:value.notifications.map(mark)}:value);}).catch(()=>{}).finally(()=>markingNotifications.current.delete(key));},[tab,me,orgId,data,platformData]);
   const unreadNotifications=(data?.notifications??platformData?.notifications??[]).filter(n=>!n.readBy.includes(me?.user.id??'')).length;
   useEffect(()=>{const badges=navigator as Navigator&{setAppBadge?:(count:number)=>Promise<void>;clearAppBadge?:()=>Promise<void>};void (unreadNotifications?badges.setAppBadge?.(unreadNotifications):badges.clearAppBadge?.())?.catch(()=>{});},[unreadNotifications]);
   const dateControl=statsAllowed&&<div className="statistics-date-control"><label className="field">{t('statsDate')}<input type="date" value={statsDate} onChange={e=>setStatsDate(e.target.value)}/></label><button className="button outline" onClick={()=>setStatsDate('')}>{t('statsAll')}</button>{selectedDay&&<small>{selectedDay.timezone}</small>}{statsDate&&<p className="muted">{t('statsDateNote')}</p>}{statsFailure===`${orgId}:${statsDate||'all'}`&&<p role="alert">{t('statsLoadError')}</p>}</div>;
@@ -1010,12 +1010,12 @@ export function OpsApp({ view }: { view: string }) {
             <Logo />
           </Link>
           <nav>
-            <Link
+            <a
               href={`/${locale === "ar" ? "en" : "ar"}/${view === "home" ? "" : view}`}
               className="language-link"
             >
               {locale === "ar" ? "EN" : "العربية"}
-            </Link>
+            </a>
             <Link href={href("login")} className="button quiet">
               {t("login")}
             </Link>
@@ -1116,10 +1116,7 @@ export function OpsApp({ view }: { view: string }) {
                     </>
                   ) : (
                     <>
-                      <Field field={field("email", "email")} />
-                      {view === "login" && (
-                        <Field signIn field={field("password", "password")} />
-                      )}
+                      <LoginFields/>
                     </>
                   )}
                   <button
@@ -1169,7 +1166,7 @@ export function OpsApp({ view }: { view: string }) {
     );
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" dir={locale==='ar'?'rtl':'ltr'}>
       <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}>
         <Link href={href()}>
           <Logo dark variant="pink" />
@@ -1188,7 +1185,7 @@ export function OpsApp({ view }: { view: string }) {
                   setSearch("");
                 }}
               >
-                <span>{t(item)}</span>
+                <span>{t(data?.role==='OWNER'&&item==='team'?'teamAndCustomers':data?.role==='OWNER'&&item==='branches'?'branchesAndCameras':item)}</span>
                 {item==='notifications'&&unreadNotifications>0&&<b>{unreadNotifications}</b>}
               </button>
             );
@@ -1201,11 +1198,10 @@ export function OpsApp({ view }: { view: string }) {
           </div>
           <button
             className="icon-button"
-            aria-label={t("logout")}
+            disabled={busy} aria-label={t("logout")}
             onClick={async () => {
-              await authClient.signOut();
-              router.push(href("login"));
-              router.refresh();
+              setBusy(true);
+              try { const result=await authClient.signOut(); if(result.error)throw new Error(result.error.message); window.location.replace(href("login")); } catch(error){showError(error);setBusy(false);}
             }}
           >
             {t("logout")}
@@ -1248,17 +1244,17 @@ export function OpsApp({ view }: { view: string }) {
                 {me.memberships.map((m) => (
                   <option key={m.orgId} value={m.orgId}>
                     {m.org.name}
-                    {m.org.isDemo ? " Â· DEMO" : ""}
+                    {m.org.isDemo ? " · DEMO" : ""}
                   </option>
                 ))}
               </select>
             )}
-            <Link
+            <a
               className="language-link"
               href={`/${locale === "ar" ? "en" : "ar"}/dashboard`}
             >
               {locale === "ar" ? "EN" : "العربية"}
-            </Link>
+            </a>
             <button
               className="icon-button"
               aria-label={t("refresh")}
@@ -1269,10 +1265,10 @@ export function OpsApp({ view }: { view: string }) {
             </button>
           </div>
         </header>
-        <main className="workspace"><ContractGate key={orgId} orgId={orgId} skip={!orgId||isPlatform||isCustomer} showContract={tab==='contract'}><InstallApp active={tab === "installApp"}/>
+        <main className="workspace">{isCustomer&&data?.org.publicNotice&&<p className="public-wash-notice" role="status">{data.org.publicNotice}</p>}<ContractGate key={orgId} orgId={orgId} skip={!orgId||isPlatform||isCustomer} showContract={tab==='contract'}><InstallApp active={tab === "installApp"||(data?.role==='OWNER'&&tab==='organizationSettingsTab')}/>
           <div className="page-title">
             <div>
-              <h1>{tab === "overview" ? t("workspaceTitle") : t(tab)}</h1>
+              <h1>{tab === "overview" ? t("workspaceTitle") : t(data?.role==='OWNER'&&tab==='team'?'teamAndCustomers':data?.role==='OWNER'&&tab==='branches'?'branchesAndCameras':tab)}</h1>
             </div>
             {tab === "overview" && isCustomer && (
               <button className="button primary" onClick={bookingForm}>
@@ -1346,7 +1342,7 @@ export function OpsApp({ view }: { view: string }) {
                               <div>
                                 <b>{app.businessName}</b>
                                 <small>
-                                  {app.ownerName} Â· {app.city}
+                                  {app.ownerName} · {app.city}
                                 </small>
                               </div>
                               <Badge
@@ -1385,7 +1381,7 @@ export function OpsApp({ view }: { view: string }) {
                               <div>
                                 <h3>{branch.name}</h3>
                                 <small>
-                                  {branch.city} Â· {branch.timezone}
+                                  {branch.city} · {branch.timezone}
                                 </small>
                               </div>
                               <Badge value="ACTIVE" label={state("ACTIVE")} />
@@ -1467,7 +1463,7 @@ export function OpsApp({ view }: { view: string }) {
                             <td>
                               <b>{app.businessName}</b>
                               <small>
-                                {app.city} Â· {app.branchCount} {t("branches")}
+                                {app.city} · {app.branchCount} {t("branches")}
                               </small>
                               <small>{date(app.createdAt)}</small>
                             </td>
@@ -1554,8 +1550,8 @@ export function OpsApp({ view }: { view: string }) {
                           <Badge value={org.status} label={state(org.status)} />
                         </div>
                         <p className="muted">
-                          {org._count.branches} {t("branches")} Â·{" "}
-                          {org._count.memberships} {t("team")} Â·{" "}
+                          {org._count.branches} {t("branches")} ·{" "}
+                          {org._count.memberships} {t("team")} ·{" "}
                           {org._count.bays} {t("bay")}
                         </p>
                         {org.isDemo && (
@@ -1716,7 +1712,7 @@ export function OpsApp({ view }: { view: string }) {
                         </h3>
                         <p className="muted">
                           {data.branches.find((b) => b.id === w.branchId)?.name}{" "}
-                          Â·{" "}
+                          ·{" "}
                           {data.bays.find((b) => b.id === w.bayId)?.name ?? "—"}
                         </p>
                         <div className="wash-timing">
@@ -1795,7 +1791,7 @@ export function OpsApp({ view }: { view: string }) {
                               >
                                 {t("feedback")}
                                 {w.feedback
-                                  ? " Â· " + w.feedback.rating + "/5"
+                                  ? " · " + w.feedback.rating + "/5"
                                   : ""}
                               </button>
                             )}
@@ -1927,7 +1923,7 @@ export function OpsApp({ view }: { view: string }) {
                   </div>
                   {data.customRoles.map((role) => (
                     <p className="muted" key={role.id}>
-                      {role.name} Â· {role.permissions.length} {t("permissions")}
+                      {role.name} · {role.permissions.length} {t("permissions")}
                     </p>
                   ))}
                   {data.members
@@ -1951,8 +1947,8 @@ export function OpsApp({ view }: { view: string }) {
                     ))}
                 </div>
               )}
-              {tab === "cameraIp" && data && <><CameraRegistry orgId={orgId} data={data} onRefresh={refresh}/>{has('wash.view_sessions')&&<CameraVisitsPanel orgId={orgId} canReview={has('wash.complete_session')} services={data.services}/>}</>}
-              {tab === "washCustomers" && data && <CustomerPanel orgId={orgId} data={data} onRefresh={refresh}/>}
+              {(tab === "cameraIp"||(data?.role==='OWNER'&&tab==='branches'&&has('tenant.manage_cameras'))) && data && <><CameraRegistry orgId={orgId} data={data} onRefresh={refresh}/>{has('wash.view_sessions')&&<CameraVisitsPanel orgId={orgId} canReview={has('wash.complete_session')} services={data.services}/>}</>}
+              {(tab === "washCustomers"||(data?.role==='OWNER'&&tab==='team'&&has('tenant.manage_customers'))) && data && <CustomerPanel orgId={orgId} data={data} onRefresh={refresh}/>}
               {tab === "reports" && data && (
                 <>
                   <PlatformWashReports orgId={orgId}/>
@@ -2020,7 +2016,7 @@ export function OpsApp({ view }: { view: string }) {
                               </td>
                               <td>
                                 <small>
-                                  {log.entityType} Â· {log.entityId.slice(0, 8)}
+                                  {log.entityType} · {log.entityId.slice(0, 8)}
                                 </small>
                               </td>
                               <td>{date(log.createdAt)}</td>
@@ -2038,7 +2034,7 @@ export function OpsApp({ view }: { view: string }) {
                     <div className="notification-row" key={n.id}>
                       <div>
                         <p>
-                          {n.type==='WASH_COMMENT'?t('washComment')+': ':n.type==='OWNER_MESSAGE'?t('ownerMessage')+': ':['WASH_OVERDUE','CAMERA_REVIEW','CAMERA_FAILED'].includes(n.type)?'':t('applications')+': '}{n.message}
+                          {n.type==='WASH_COMMENT'?t('washComment')+': ':n.type==='OWNER_MESSAGE'?t('ownerMessage')+': ':n.type==='APPLICATION_SUBMITTED'?t('applications')+': ':''}{n.message}
                         </p>
                         <small>{date(n.createdAt)}</small>
                       </div>
@@ -2096,8 +2092,9 @@ export function OpsApp({ view }: { view: string }) {
                   )}
                 </div>
               )}
+              {tab==='organizationSettingsTab'&&data?.role==='OWNER'&&<details className="panel"><summary>{t('contract')}</summary><ContractGate orgId={orgId} showContract><span/></ContractGate></details>}
               {tab === "organizationSettingsTab" && (has("tenant.manage_profile")||manageServices()) && data && <div className="panel"><button className="button primary" onClick={settingsForm}>{t("organizationSettings")}</button><form className="management-notice-form" onSubmit={event=>{event.preventDefault();const message=String(new FormData(event.currentTarget).get('message')??'');void run(()=>api(`tenants/${orgId}/notice`,'PATCH',{message}));}}><label className="field">{t('customerNotice')}<input name="message" maxLength={240} defaultValue={data.org.publicNotice} placeholder={t('customerNoticePlaceholder')}/></label><button className="button outline" disabled={busy}>{t('save')}</button></form></div>}
-              {tab === "contactPlatform" && data?.role==='OWNER' && <div className="panel"><h2>{t('contactPlatform')}</h2><form className="form-fields" onSubmit={event=>{event.preventDefault();const form=event.currentTarget;const message=String(new FormData(form).get('message')??'');void run(async()=>{await api(`tenants/${orgId}/owner-message`,'POST',{message});form.reset();window.alert(t('messageSent'));});}}><label className="field">{t('ownerMessageBody')}<textarea name="message" minLength={2} maxLength={1000} required rows={5}/></label><button className="button primary" disabled={busy}>{t('sendOwnerMessage')}</button></form></div>}
+              {(tab === "contactPlatform"||tab==='organizationSettingsTab') && data?.role==='OWNER' && <div className="panel"><h2>{t('contactPlatform')}</h2><form className="form-fields" onSubmit={event=>{event.preventDefault();const form=event.currentTarget;const message=String(new FormData(form).get('message')??'');void run(async()=>{await api(`tenants/${orgId}/owner-message`,'POST',{message});form.reset();window.alert(t('messageSent'));});}}><label className="field">{t('ownerMessageBody')}<textarea name="message" minLength={2} maxLength={1000} required rows={5}/></label><button className="button primary" disabled={busy}>{t('sendOwnerMessage')}</button></form></div>}
 
             </>
           )}

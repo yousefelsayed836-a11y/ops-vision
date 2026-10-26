@@ -599,7 +599,7 @@
   "clearSavedAccounts": "مسح القائمة المحفوظة",
   "showPassword": "إظهار",
   "hidePassword": "إخفاء",
-  "savedAccountsHelp": "يُحفظ البريد بعد دخول ناجح على هذا الجهاز فقط، ولا تُحفظ كلمة المرور.",
+  "savedAccountsHelp": "لتعبئة كلمة المرور تلقائيًا، وافق على حفظها في مدير كلمات المرور بالمتصفح. التطبيق يحفظ قائمة الإيميلات فقط.",
   "teamAndCustomers": "الفريق والعملاء",
   "branchesAndCameras": "الفروع والأحواض والكاميرات",
   "vehicleCategories": "أنواع المركبات"

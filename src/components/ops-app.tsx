@@ -879,7 +879,7 @@ export function OpsApp({ view }: { view: string }) {
   const navigation =
     !orgId && isPlatform
       ? [
-          ...(canPlatform("platform.manage_tenants") ? ["organizations","contracts"] : []),
+          ...(canPlatform("platform.manage_tenants") ? ["organizations"] : []),
           ...(canPlatform("platform.view_bays") ? ["allBaysTitle"] : []),
           ...(canPlatform("platform.review_applications")
             ? ["applications"]
@@ -890,6 +890,7 @@ export function OpsApp({ view }: { view: string }) {
           ...(canPlatform('platform.manage_users')?['accounts']:[]),
           "installApp",
           ...((has("tenant.manage_profile")||manageServices()) ? ["organizationSettingsTab"] : []),
+          ...(canPlatform("platform.manage_tenants") ? ["contracts"] : []),
         ]
       : isCustomer
         ? [
@@ -1087,7 +1088,7 @@ export function OpsApp({ view }: { view: string }) {
                   </Link>
                 </div>
               ) : (
-                <form method="post" onSubmit={publicSubmit}>
+                <form method="post" autoComplete="on" onSubmit={publicSubmit}>
                   {view === "register" ? (
                     <div className="form-fields">
                       <Field field={field("businessName")} />

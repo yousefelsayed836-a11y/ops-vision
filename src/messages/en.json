@@ -599,7 +599,7 @@
   "clearSavedAccounts": "Clear saved accounts",
   "showPassword": "Show",
   "hidePassword": "Hide",
-  "savedAccountsHelp": "Email addresses are saved after a successful login on this device only. Passwords are never saved.",
+  "savedAccountsHelp": "To autofill your password, save it in your browser password manager. The app only remembers email addresses.",
   "teamAndCustomers": "Team & customers",
   "branchesAndCameras": "Branches, bays & cameras",
   "vehicleCategories": "Vehicle types"

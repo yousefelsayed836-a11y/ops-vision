@@ -28,7 +28,7 @@ export async function reportPdf(actor:Actor,raw:unknown){
  const where:Prisma.WashWhereInput={...(orgId?{orgId}:{}),...(branchId?{branchId}:{}),status:{in:['COMPLETED','DELIVERED']},completedAt:{gte:start,lt:end}};
  const count=await db.wash.count({where});
  assert(count<=10000,'REPORT_TOO_LARGE',413);
- const washes=await db.wash.findMany({where,orderBy:{completedAt:'asc'},select:{id:true,serviceNameAr:true,startedAt:true,completedAt:true,org:{select:{name:true}},branch:{select:{name:true}},bay:{select:{name:true}},vehicle:{select:{category:true}}}});
+ const washes=await db.wash.findMany({where,orderBy:{completedAt:'asc'},select:{id:true,price:true,currency:true,serviceNameAr:true,startedAt:true,completedAt:true,org:{select:{name:true,currency:true}},branch:{select:{name:true}},bay:{select:{name:true}},vehicle:{select:{category:true}}}});
  const font=join(process.cwd(),'assets','fonts','cairo-report.ttf');
  const doc=new PDFDocument({size:'A4',margin:42,bufferPages:true,info:{Title:'OpsVision Wash Report'}});
  const chunks:Buffer[]=[];
@@ -40,7 +40,8 @@ export async function reportPdf(actor:Actor,raw:unknown){
  header();
  doc.fontSize(11).fillColor('#263f55').text(`الفترة: ${query.from} إلى ${query.to}`,42,108,{width,align:'right'});
  doc.fontSize(11).text(`عدد الغسلات: ${washes.length}`,42,132,{width,align:'right'});
- let y=168;
+ const total=washes.reduce((sum,wash)=>sum+Number(wash.price),0); const currency=washes[0]?.org.currency??washes[0]?.currency??'SAR'; doc.fontSize(12).fillColor('#263f55').text(`إجمالي المبلغ: ${total.toFixed(2)} ${currency}`,42,153,{width,align:'right'});
+ let y=188;
  const organizations=[...new Set(washes.map(wash=>wash.org.name))];
  for(const name of organizations){
   const group=washes.filter(wash=>wash.org.name===name);
@@ -54,7 +55,7 @@ export async function reportPdf(actor:Actor,raw:unknown){
    const stamp=new Intl.DateTimeFormat('ar-SA',{timeZone:'Asia/Riyadh',dateStyle:'short',timeStyle:'short'}).format(wash.completedAt!);
    doc.roundedRect(42,y,width,47,7).fill('#f8fafb');
    doc.fontSize(9).fillColor('#263f55').text(`${wash.bay?.name??'بدون حوض'} — ${wash.branch.name} | ${vehicleCategoryLabel(wash.vehicle.category,'ar')}`,50,y+6,{width:width-16,align:'right'});
-   doc.fontSize(8).fillColor('#61788a').text(`${wash.serviceNameAr} | ${duration} دقيقة | ${stamp}`,50,y+25,{width:width-16,align:'right'});
+   doc.fontSize(8).fillColor('#61788a').text(`${wash.serviceNameAr} | ${duration} دقيقة | ${Number(wash.price).toFixed(2)} ${wash.currency} | ${stamp}`,50,y+25,{width:width-16,align:'right'});
    y+=54;
   }
   y+=10;

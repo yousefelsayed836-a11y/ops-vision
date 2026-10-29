@@ -1926,3 +1926,14 @@ td code {
  .invitation-dialog input{font-size:16px;padding:10px;min-height:44px}.invitation-dialog>small{font-size:11px;line-height:1.6;display:block;margin-block-start:8px}
  .form-dialog .button{min-height:44px;padding:9px 12px}.form-dialog .button-row{flex-wrap:wrap}
 }
+
+/* Public product overview */
+.features{display:block;max-width:1188px;padding:42px 24px 20px}
+.features .section-heading{max-width:700px;margin:0 auto 24px;text-align:center}
+.features .section-heading h2{font-size:26px;margin-top:8px}
+.features .section-heading p{font-size:14px}
+.feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.feature-grid article{background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px;min-height:150px}
+.feature-grid h3{font-size:17px;margin:0 0 8px}
+.feature-grid p{font-size:13px;line-height:1.8;margin:0}
+@media(max-width:700px){.features{padding:30px 16px 12px}.features .section-heading h2{font-size:21px}.feature-grid{grid-template-columns:1fr;gap:10px}.feature-grid article{min-height:auto;padding:17px}}

@@ -1041,6 +1041,18 @@ export function OpsApp({ view }: { view: string }) {
                 </div>
               </div>
             </section>
+            <section className="features" aria-labelledby="features-title">
+              <div className="section-heading">
+                <span className="eyebrow">{t("publicEyebrow")}</span>
+                <h2 id="features-title">{t("publicHeadline")}</h2>
+                <p>{t("publicDescription")}</p>
+              </div>
+              <div className="feature-grid">
+                <article><h3>{t("featureOperations")}</h3><p>{t("featureOperationsText")}</p></article>
+                <article><h3>{t("featurePeople")}</h3><p>{t("featurePeopleText")}</p></article>
+                <article><h3>{t("featureAutomation")}</h3><p>{t("featureAutomationText")}</p></article>
+              </div>
+            </section>
             <section className="public-cta">
               <div>
                 <h2>{t("cta")}</h2>

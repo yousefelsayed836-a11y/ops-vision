@@ -56,6 +56,7 @@ export const serviceInput = z.object({
   price: z.string().regex(/^\d{1,9}(\.\d{1,2})?$/),
   durationMinutes: z.coerce.number().int().min(1).max(1440),
   category: z.string().regex(/^(ALL|[A-Z][A-Z0-9_]{1,39})$/).default("ALL"),
+  unit: z.enum(["unit","meter","piece"]).default("unit"),
   taxRate: z
     .string()
     .regex(/^\d{1,2}(\.\d{1,2})?$/)

@@ -22,7 +22,7 @@ export async function adjustWashMinutes(scope:Scope,id:string,raw:unknown){
 }
 export async function addWashExtraService(scope:Scope,id:string,raw:unknown){
  assert(scope.role!=='OWNER'&&(scope.permissions.includes('tenant.manage_services')||scope.permissions.includes('wash.manage_services')),'FORBIDDEN',403);
- const {serviceId}=z.object({serviceId:z.uuid()}).parse(raw);
+ const {serviceId,quantity}=z.object({serviceId:z.uuid(),quantity:z.coerce.number().positive().max(10000).default(1)}).parse(raw);
  return transaction(async tx=>{
   const wash=await tx.wash.findFirst({where:{id,orgId:scope.orgId},include:{vehicle:true}});assert(wash,'NOT_FOUND',404);branchScope(scope,wash.branchId);
   assert(['WASHING','PAUSED','INSPECTION'].includes(wash.status),'WASH_NOT_ACTIVE',409);
@@ -35,16 +35,16 @@ export async function addWashExtraService(scope:Scope,id:string,raw:unknown){
   const base=rules[0]?.price??service.price;
   const serviceMinutes=rules[0]?.durationMinutes??service.durationMinutes;
 
-  const price=base;
+  const price=new Prisma.Decimal(base).mul(quantity);
 
-  const extra=await tx.washExtraService.create({data:{id:randomUUID(),orgId:scope.orgId,washId:id,serviceId,nameAr:service.nameAr,nameEn:service.nameEn,price,durationMinutes:serviceMinutes,addedById:scope.actor.id}});
+  const extra=await tx.washExtraService.create({data:{id:randomUUID(),orgId:scope.orgId,washId:id,serviceId,nameAr:service.nameAr,nameEn:service.nameEn,price,quantity,unit:service.unit,durationMinutes:serviceMinutes,addedById:scope.actor.id}});
   const nextSubtotal=wash.subtotal.plus(base);
 
   const nextTaxable=nextSubtotal.minus(wash.discount);
   const nextTax=new Prisma.Decimal(0);
   await tx.wash.update({where:{id},data:{subtotal:nextSubtotal,taxAmount:nextTax,price:nextTaxable.plus(nextTax),version:{increment:1}}});
   await audit(tx,scope.actor.id,'wash.extra_service_added','wash',id,scope.orgId,{serviceId,extraId:extra.id,price:String(price)});
-  return {id:extra.id,nameAr:extra.nameAr,nameEn:extra.nameEn,price:String(extra.price),durationMinutes:extra.durationMinutes};
+  return {id:extra.id,nameAr:extra.nameAr,nameEn:extra.nameEn,price:String(extra.price),quantity:Number(extra.quantity),unit:extra.unit,durationMinutes:extra.durationMinutes};
  });
 }
 export async function removeWashExtraService(scope:Scope,id:string,extraId:string){

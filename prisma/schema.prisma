@@ -207,6 +207,7 @@ model WashService {
   price Decimal @db.Decimal(12,2)
   durationMinutes Int
   category String @default("ALL")
+  unit String @default("unit")
   active Boolean @default(true)
   taxRate Decimal @default(0) @db.Decimal(5,2)
   org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
@@ -299,6 +300,8 @@ model WashExtraService {
   nameAr String
   nameEn String
   price Decimal @db.Decimal(12,2)
+  quantity Decimal @default(1) @db.Decimal(10,2)
+  unit String @default("unit")
   durationMinutes Int
   addedById String
   createdAt DateTime @default(now())

@@ -95,7 +95,7 @@ export type Wash = {
   serviceNameEn: string;
   estimatedMinutes: number;
   timeAdjustmentSeconds: number;
-  extraServices: {id:string;serviceId:string;nameAr:string;nameEn:string;price:string;durationMinutes:number}[];
+  extraServices: {id:string;serviceId:string;nameAr:string;nameEn:string;price:string;quantity:number;unit:string;durationMinutes:number}[];
   status: string;
   version: number;
   paymentStatus: string;

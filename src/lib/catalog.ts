@@ -3,7 +3,7 @@ export const washCatalog=[
  {ar:'صابون',en:'Soap'}, {ar:'غسيل خارجي',en:'Exterior wash'},
  {ar:'غسيل داخلي',en:'Interior wash'}, {ar:'تمسيح',en:'Wipe down'},
  {ar:'داخل/خارج',en:'Interior / exterior'}, {ar:'داخل',en:'Interior'},
- {ar:'خارج',en:'Exterior'}, {ar:'ماء',en:'Water'},
+ {ar:'خارج',en:'Exterior'}, {ar:'ماء',en:'Water'}, {ar:'سجاد',en:'Carpet',unit:'meter'},
 ] as const;
 export const vehicleCategories=['SEDAN','SUV','FULL_SIZE_SUV','MOTORCYCLE','BICYCLE'] as const;
 export const builtinVehicleCategories=['SEDAN','SUV','FULL_SIZE_SUV','MOTORCYCLE','BICYCLE','HATCHBACK','CROSSOVER','PICKUP','VAN','MINIBUS','LARGE'] as const;

@@ -74,6 +74,7 @@ export type Service = {
   price: string;
   durationMinutes: number;
   category: string;
+  unit: string;
   active: boolean;
   taxRate: string;
   pricingRules: { id: string; category: string; size: string; price: string; durationMinutes?:number|null }[];
@@ -196,7 +197,7 @@ export type FormField = {
   label: string;
   type?: string;
   required?: boolean;
-  options?: { value: string; label: string; category?: string; durationMinutes?:number;price?:string;pricingRules?:{category:string;size:string;price:string;durationMinutes?:number|null}[] }[];
+  options?: { value: string; label: string; category?: string; unit?:string; durationMinutes?:number;price?:string;pricingRules?:{category:string;size:string;price:string;durationMinutes?:number|null}[] }[];
   currency?:string;
   customCategories?:{code:string;nameAr:string;nameEn:string}[];
   default?: string;

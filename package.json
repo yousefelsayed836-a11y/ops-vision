@@ -21,13 +21,14 @@
     "video:worker": "node scripts/run.mjs tsx scripts/video-worker.ts"
   },
   "dependencies": {
+    "@better-auth/passkey": "^1.7.14",
     "@fontsource/cairo": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "@types/pdfkit": "^0.17.7",
     "@types/web-push": "^3.6.4",
-    "better-auth": "1.7.10",
+    "better-auth": "^1.7.14",
     "dotenv": "^17.2.0",
     "lucide-react": "^0.577.0",
     "next": "16.4.2",

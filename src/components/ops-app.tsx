@@ -78,10 +78,10 @@ function StateEmpty({ title }: { title: string }) {
     </div>
   );
 }
-function Field({ field,selectedCategory,onCategoryChange,signIn=false }: { field: FormField;signIn?:boolean;selectedCategory?:string;onCategoryChange?:(value:string)=>void }) {
+function Field({ field,selectedCategory,onCategoryChange,onServiceChange,signIn=false }: { field: FormField;signIn?:boolean;selectedCategory?:string;onCategoryChange?:(value:string)=>void;onServiceChange?:(value:string)=>void }) {
   const locale = useLocale();
   if (field.type === "vehicle-category") return <VehicleCategoryPicker name={field.name} label={field.label} locale={locale} value={selectedCategory} defaultValue={field.default} onChange={onCategoryChange} custom={field.customCategories}/>;
-  if (field.type === "service-choice") return <ServiceChoicePicker name={field.name} label={field.label} options={field.options??[]} category={selectedCategory??'SEDAN'} currency={field.currency}/>;
+  if (field.type === "service-choice") return <ServiceChoicePicker name={field.name} label={field.label} options={field.options??[]} category={selectedCategory??'SEDAN'} currency={field.currency} onChange={onServiceChange}/>;
   if (field.type === "permissions")
     return (
       <fieldset className="field permission-choices">
@@ -166,6 +166,7 @@ function FormDialog({
   const ref = useRef<HTMLDialogElement>(null);
   const [busy, setBusy] = useState(false);
   const [selectedCategory,setSelectedCategory]=useState(modal.fields.find(field=>field.name==='category')?.default??'SEDAN');
+  const [selectedService,setSelectedService]=useState('');
   useEffect(() => {
     ref.current?.showModal();
   }, []);
@@ -206,8 +207,8 @@ function FormDialog({
       {modal.description && <p className="muted">{modal.description}</p>}
       <form onSubmit={submit}>
         <div className="form-fields">
-          {modal.fields.map((field) => (
-            <Field key={field.name==='serviceId'?`${field.name}-${selectedCategory}`:field.name} field={field} selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory}/>
+          {modal.fields.filter(field=>field.name!=='quantity'||modal.fields.find(item=>item.name==='serviceId')?.options?.find(option=>option.value===selectedService)?.unit==='meter').map((field) => (
+            <Field key={field.name==='serviceId'?`${field.name}-${selectedCategory}`:field.name} field={field} selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory} onServiceChange={setSelectedService}/>
           ))}
         </div>
         <button disabled={busy} className="button primary full" type="submit">
@@ -527,6 +528,25 @@ export function OpsApp({ view }: { view: string }) {
       setBusy(false);
     }
   }
+  async function signInWithPasskey(autoFill=false){
+    if(!autoFill)setBusy(true);
+    try{
+      const result=await authClient.signIn.passkey(autoFill?{autoFill:true}:undefined);
+      if(result.error){if(!autoFill)setToast({text:locale==='ar'?'تعذر تسجيل الدخول بمفتاح المرور. تأكد من تسجيل مفتاح لهذا الحساب على هذا الجهاز.':'Could not sign in with a passkey. Make sure this account has a passkey on this device.',error:true});return;}
+      if(result.data?.user?.email)rememberLoginEmail(result.data.user.email.toLowerCase());
+      window.location.assign(href('dashboard'));
+    }catch{if(!autoFill)setToast({text:locale==='ar'?'تعذر تشغيل مفتاح المرور على هذا المتصفح أو الجهاز.':'Passkeys are unavailable in this browser or device.',error:true});}
+    finally{if(!autoFill)setBusy(false);}
+  }
+  async function addPasskey(){
+    setBusy(true);
+    try{
+      const result=await authClient.passkey.addPasskey({name:locale==='ar'?'مفتاح OpsVision':'OpsVision passkey'});
+      if(result.error)throw new Error(result.error.message??'PASSKEY_REGISTRATION_FAILED');
+      setToast({text:locale==='ar'?'تم تسجيل مفتاح المرور. يمكنك الآن الدخول ببصمة الجهاز أو وسيلة القفل المدعومة.':'Passkey added. You can now sign in with your device biometric or supported screen lock.',error:false});
+    }catch{setToast({text:locale==='ar'?'لم يكتمل تسجيل مفتاح المرور. استخدم HTTPS وجهازًا يدعم مفاتيح المرور ثم حاول مجددًا.':'Passkey setup failed. Use HTTPS and a device that supports passkeys, then try again.',error:true});}
+    finally{setBusy(false);}
+  }
   const field = (name: string, type?: string, required = true): FormField => ({
     name,
     label: t(name),
@@ -615,7 +635,7 @@ export function OpsApp({ view }: { view: string }) {
       ],
       "services",
     );
-  const washForm = (bay?:{id:string;branchId:string}) => setModal({title:t('newWash'),fields:[{...bayField,required:true,default:bay?.id,options:(data?.bays??[]).filter(b=>b.status==='AVAILABLE'&&!b.activeWashId).map(b=>({value:b.id,label:`${data?.branches.find(branch=>branch.id===b.branchId)?.name??''} · ${b.name}`}))},{name:'category',label:t('category'),type:'vehicle-category',default:'SEDAN',customCategories:data?.vehicleCategories},{name:'quantity',label:locale==='ar'?'الكمية (عدد الأمتار)':'Quantity (meters)',type:'number',min:0.01,step:'0.01',default:'1'},{name:'serviceId',label:t('service'),type:'service-choice',currency:data?.org.currency,options:(data?.services??[]).filter(service=>service.active).map(service=>({value:service.id,label:locale==='ar'?service.nameAr:service.nameEn,category:service.category,durationMinutes:service.durationMinutes,price:service.price,pricingRules:service.pricingRules}))}],submit:t(has('wash.start_session')?'startWash':'save'),execute:async values=>{const selectedBay=data?.bays.find(b=>b.id===values.bayId);return api(`tenants/${orgId}/wash-entry`,'POST',{branchId:selectedBay?.branchId,bayId:values.bayId,serviceId:values.serviceId,quantity:Number(values.quantity??1),vehicle:{category:values.category},startNow:has('wash.start_session')});}});
+  const washForm = (bay?:{id:string;branchId:string}) => setModal({title:t('newWash'),fields:[{...bayField,required:true,default:bay?.id,options:(data?.bays??[]).filter(b=>b.status==='AVAILABLE'&&!b.activeWashId).map(b=>({value:b.id,label:`${data?.branches.find(branch=>branch.id===b.branchId)?.name??''} · ${b.name}`}))},{name:'category',label:t('category'),type:'vehicle-category',default:'SEDAN',customCategories:data?.vehicleCategories},{name:'quantity',label:locale==='ar'?'عدد الأمتار':'Meters',type:'number',min:0.01,step:'0.01',default:'1'},{name:'serviceId',label:t('service'),type:'service-choice',currency:data?.org.currency,options:(data?.services??[]).filter(service=>service.active).map(service=>({value:service.id,label:locale==='ar'?service.nameAr:service.nameEn,category:service.category,unit:service.unit,durationMinutes:service.durationMinutes,price:service.price,pricingRules:service.pricingRules}))}],submit:t(has('wash.start_session')?'startWash':'save'),execute:async values=>{const selectedBay=data?.bays.find(b=>b.id===values.bayId);return api(`tenants/${orgId}/wash-entry`,'POST',{branchId:selectedBay?.branchId,bayId:values.bayId,serviceId:values.serviceId,quantity:Number(values.quantity||1),vehicle:{category:values.category},startNow:has('wash.start_session')});}});
   function startWash(wash:Wash){if(wash.bayId){void run(()=>api(`tenants/${orgId}/washes/${wash.id}/transition`,'POST',{to:'WASHING',version:wash.version}));return;}setModal({title:t('startWash'),fields:[{...bayField,required:true,options:(data?.bays??[]).filter(b=>b.branchId===wash.branchId&&b.status==='AVAILABLE'&&!b.activeWashId).map(b=>({value:b.id,label:b.name}))}],submit:t('startWash'),execute:values=>api(`tenants/${orgId}/washes/${wash.id}/transition`,'POST',{to:'WASHING',version:wash.version,bayId:values.bayId})});}
   function finishWash(wash:Wash){void run(()=>api(`tenants/${orgId}/washes/${wash.id}/transition`,'POST',{to:'COMPLETED',version:wash.version}));}
   function pauseWash(wash:Wash){void run(()=>api(`tenants/${orgId}/washes/${wash.id}/transition`,'POST',{to:'PAUSED',version:wash.version}));}
@@ -1134,7 +1154,7 @@ export function OpsApp({ view }: { view: string }) {
                     </>
                   ) : (
                     <>
-                      <LoginFields/>
+                      <LoginFields onPasskey={()=>void signInWithPasskey()} busy={busy}/>
                     </>
                   )}
                   <button
@@ -1214,6 +1234,7 @@ export function OpsApp({ view }: { view: string }) {
             <strong>{me?.user.name ?? "OpsVision"}</strong>
             <small>{me?.user.email}</small>
           </div>
+          <button type="button" className="text-button" disabled={busy} onClick={()=>void addPasskey()}>{locale==='ar'?'إضافة مفتاح مرور لهذا الجهاز':'Add a passkey on this device'}</button>
           <button
             className="icon-button"
             disabled={busy} aria-label={t("logout")}

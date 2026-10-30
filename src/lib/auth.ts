@@ -1,8 +1,10 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { passkey } from "@better-auth/passkey";
 import { db } from "./db";
 export const auth = betterAuth({
   appName: "OpsVision",
+  plugins: [passkey()],
   disabledPaths:['/change-password','/set-password','/request-password-reset','/reset-password','/forget-password'],
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   database: prismaAdapter(db, { provider: "postgresql", transaction: true }),

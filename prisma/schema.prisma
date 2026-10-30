@@ -1,650 +1,743 @@
 generator client {
   provider = "prisma-client"
-  output = "../src/generated/prisma"
+  output   = "../src/generated/prisma"
 }
+
 datasource db {
   provider = "postgresql"
 }
 
 model User {
-  id String @id
-  name String
-  email String @unique
-  emailVerified Boolean @default(false)
-  image String?
-  platformRole String @default("NONE")
-  platformPermissions String[] @default([])
-  platformCreatedBy String?
-  disabled Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String               @id
+  name                String
+  email               String               @unique
+  emailVerified       Boolean              @default(false)
+  image               String?
+  platformRole        String               @default("NONE")
+  platformPermissions String[]             @default([])
+  platformCreatedBy   String?
+  disabled            Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
   contractAcceptances ContractAcceptance[]
-  sessions Session[]
-  accounts Account[]
-  memberships Membership[]
+  sessions            Session[]
+  accounts            Account[]
+  passkeys            Passkey[]
+  memberships         Membership[]
+
   @@index([platformCreatedBy])
 }
+
 model Session {
-  id String @id
+  id        String   @id
   expiresAt DateTime
-  token String @unique
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
   userAgent String?
-  userId String
-  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
+
 model Account {
-  id String @id
-  accountId String
-  providerId String
-  userId String
-  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
-  accessToken String?
-  refreshToken String?
-  idToken String?
-  accessTokenExpiresAt DateTime?
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
-  scope String?
-  password String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  @@unique([providerId,accountId])
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([providerId, accountId])
   @@index([userId])
 }
+
 model Verification {
-  id String @id
+  id         String   @id
   identifier String
-  value String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   @@index([identifier])
 }
+
+model Passkey {
+  id           String   @id
+  name         String?
+  publicKey    String
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  createdAt    DateTime @default(now())
+  aaguid       String?
+
+  @@index([userId])
+  @@index([credentialID])
+}
+
 model Organization {
-  id String @id @default(uuid())
-  name String
-  slug String @unique
-  status String @default("ACTIVE")
-  currency String @default("SAR")
-  isDemo Boolean @default(false)
-  cancellationLeadHours Int @default(1)
-  defaultWashMinutes Int @default(20)
-  siteIp String?
-  publicNotice String @default("")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  contractAcceptances ContractAcceptance[]
-  memberships Membership[]
-  branches Branch[]
-  bays WashBay[]
-  services WashService[]
-  vehicles Vehicle[]
-  washes Wash[]
-  cameras Camera[]
-  events AutomationEvent[]
-  rules AutomationRule[]
-  notifications Notification[]
-  observations Observation[]
-  invitations Invitation[]
-  outbox Outbox[]
-  applications Application[]
-  roles Role[]
-  pricingRules ServicePricingRule[]
-  vehicleCategories VehicleCategory[]
-  feedback Feedback[]
-  videoAnalyses VideoAnalysis[]
-  customerProfiles CustomerProfile[]
+  id                    String               @id @default(uuid())
+  name                  String
+  slug                  String               @unique
+  status                String               @default("ACTIVE")
+  currency              String               @default("SAR")
+  isDemo                Boolean              @default(false)
+  cancellationLeadHours Int                  @default(1)
+  defaultWashMinutes    Int                  @default(20)
+  siteIp                String?
+  publicNotice          String               @default("")
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  contractAcceptances   ContractAcceptance[]
+  memberships           Membership[]
+  branches              Branch[]
+  bays                  WashBay[]
+  services              WashService[]
+  vehicles              Vehicle[]
+  washes                Wash[]
+  cameras               Camera[]
+  events                AutomationEvent[]
+  rules                 AutomationRule[]
+  notifications         Notification[]
+  observations          Observation[]
+  invitations           Invitation[]
+  outbox                Outbox[]
+  applications          Application[]
+  roles                 Role[]
+  pricingRules          ServicePricingRule[]
+  vehicleCategories     VehicleCategory[]
+  feedback              Feedback[]
+  videoAnalyses         VideoAnalysis[]
+  customerProfiles      CustomerProfile[]
 }
+
 model Membership {
-  id String @id @default(uuid())
-  userId String
-  orgId String
-  role String
-  branchId String?
-  active Boolean @default(true)
-  createdAt DateTime @default(now())
-  user User @relation(fields:[userId], references:[id], onDelete:Restrict)
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  @@unique([userId,orgId])
-  @@index([orgId,role])
+  id        String       @id @default(uuid())
+  userId    String
+  orgId     String
+  role      String
+  branchId  String?
+  active    Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  user      User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, orgId])
+  @@index([orgId, role])
 }
+
 model Role {
-  id String @id @default(uuid())
-  orgId String
-  name String
+  id          String       @id @default(uuid())
+  orgId       String
+  name        String
   permissions String[]
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  @@unique([orgId,name])
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, name])
 }
+
 model Application {
-  id String @id @default(uuid())
+  id           String               @id @default(uuid())
   businessName String
-  ownerName String
-  email String
-  phone String
-  city String
-  branchCount Int
-  status String @default("PENDING")
-  note String?
-  orgId String? @unique
-  org Organization? @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  history ApplicationHistory[]
-  @@index([status,createdAt])
+  ownerName    String
+  email        String
+  phone        String
+  city         String
+  branchCount  Int
+  status       String               @default("PENDING")
+  note         String?
+  orgId        String?              @unique
+  org          Organization?        @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  history      ApplicationHistory[]
+
+  @@index([status, createdAt])
   @@index([email])
 }
+
 model ApplicationHistory {
-  id String @id @default(uuid())
+  id            String      @id @default(uuid())
   applicationId String
-  application Application @relation(fields:[applicationId], references:[id], onDelete:Restrict)
-  fromStatus String?
-  toStatus String
-  actorId String?
-  note String?
-  createdAt DateTime @default(now())
-  @@index([applicationId,createdAt])
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  fromStatus    String?
+  toStatus      String
+  actorId       String?
+  note          String?
+  createdAt     DateTime    @default(now())
+
+  @@index([applicationId, createdAt])
 }
+
 model Invitation {
-  id String @id @default(uuid())
-  orgId String
-  email String
-  name String
-  role String
-  branchId String?
-  tokenHash String @unique
-  purpose String @default("ACTIVATE")
+  id        String       @id @default(uuid())
+  orgId     String
+  email     String
+  name      String
+  role      String
+  branchId  String?
+  tokenHash String       @unique
+  purpose   String       @default("ACTIVATE")
   expiresAt DateTime
-  usedAt DateTime?
+  usedAt    DateTime?
   revokedAt DateTime?
-  createdAt DateTime @default(now())
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  @@index([orgId,email])
+  createdAt DateTime     @default(now())
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@index([orgId, email])
 }
+
 model Branch {
-  id String @id @default(uuid())
-  orgId String
-  name String
-  city String
-  timezone String @default("Asia/Riyadh")
-  active Boolean @default(true)
-  opensAt String @default("00:00")
-  closesAt String @default("23:59")
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  bays WashBay[]
-  cameras Camera[]
-  washes Wash[]
-  createdAt DateTime @default(now())
-  @@unique([id,orgId])
+  id        String       @id @default(uuid())
+  orgId     String
+  name      String
+  city      String
+  timezone  String       @default("Asia/Riyadh")
+  active    Boolean      @default(true)
+  opensAt   String       @default("00:00")
+  closesAt  String       @default("23:59")
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  bays      WashBay[]
+  cameras   Camera[]
+  washes    Wash[]
+  createdAt DateTime     @default(now())
+
+  @@unique([id, orgId])
   @@index([orgId])
 }
+
 model WashBay {
-  id String @id @default(uuid())
-  orgId String
-  branchId String
-  name String
-  status String @default("AVAILABLE")
-  activeWashId String? @unique
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  branch Branch @relation(fields:[branchId,orgId], references:[id,orgId], onDelete:Restrict)
-  washes Wash[]
-  cameras Camera[]
+  id           String        @id @default(uuid())
+  orgId        String
+  branchId     String
+  name         String
+  status       String        @default("AVAILABLE")
+  activeWashId String?       @unique
+  org          Organization  @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  branch       Branch        @relation(fields: [branchId, orgId], references: [id, orgId], onDelete: Restrict)
+  washes       Wash[]
+  cameras      Camera[]
   cameraVisits CameraVisit[]
-  createdAt DateTime @default(now())
-  @@unique([id,orgId])
-  @@unique([branchId,name])
-  @@index([orgId,status])
+  createdAt    DateTime      @default(now())
+
+  @@unique([id, orgId])
+  @@unique([branchId, name])
+  @@index([orgId, status])
 }
+
 model WashService {
-  id String @id @default(uuid())
-  orgId String
-  nameAr String
-  nameEn String
-  description String @default("")
-  price Decimal @db.Decimal(12,2)
+  id              String               @id @default(uuid())
+  orgId           String
+  nameAr          String
+  nameEn          String
+  description     String               @default("")
+  price           Decimal              @db.Decimal(12, 2)
   durationMinutes Int
-  category String @default("ALL")
-  unit String @default("unit")
-  active Boolean @default(true)
-  taxRate Decimal @default(0) @db.Decimal(5,2)
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  washes Wash[]
-  extraWashes WashExtraService[]
-  pricingRules ServicePricingRule[]
-  createdAt DateTime @default(now())
-  @@unique([id,orgId])
-  @@index([orgId,active])
+  category        String               @default("ALL")
+  unit            String               @default("unit")
+  active          Boolean              @default(true)
+  taxRate         Decimal              @default(0) @db.Decimal(5, 2)
+  org             Organization         @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  washes          Wash[]
+  extraWashes     WashExtraService[]
+  pricingRules    ServicePricingRule[]
+  createdAt       DateTime             @default(now())
+
+  @@unique([id, orgId])
+  @@index([orgId, active])
 }
+
 model VehicleCategory {
-  id String @id @default(uuid())
-  orgId String
-  code String
-  nameAr String
-  nameEn String
-  active Boolean @default(true)
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  createdAt DateTime @default(now())
-  @@unique([orgId,code])
-  @@index([orgId,active])
+  id        String       @id @default(uuid())
+  orgId     String
+  code      String
+  nameAr    String
+  nameEn    String
+  active    Boolean      @default(true)
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  createdAt DateTime     @default(now())
+
+  @@unique([orgId, code])
+  @@index([orgId, active])
 }
+
 model Vehicle {
-  id String @id @default(uuid())
-  orgId String
+  id             String       @id @default(uuid())
+  orgId          String
   customerUserId String?
-  plate String
-  category String
-  size String @default("MEDIUM")
-  color String?
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  washes Wash[]
-  createdAt DateTime @default(now())
-  @@unique([id,orgId])
-  @@unique([orgId,plate])
+  plate          String
+  category       String
+  size           String       @default("MEDIUM")
+  color          String?
+  org            Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  washes         Wash[]
+  createdAt      DateTime     @default(now())
+
+  @@unique([id, orgId])
+  @@unique([orgId, plate])
 }
+
 model Wash {
-  customerProfileId String?
-  customerProfile CustomerProfile? @relation(fields:[customerProfileId,orgId],references:[id,orgId],onDelete:Restrict)
-  trackingLinks CustomerTracking[]
-  id String @id @default(uuid())
-  orgId String
-  branchId String
-  bayId String?
-  serviceId String
-  vehicleId String
-  customerUserId String?
-  status String @default("CHECKED_IN")
-  price Decimal @db.Decimal(12,2)
-  currency String
-  serviceNameAr String
-  serviceNameEn String
-  estimatedMinutes Int
-  timeAdjustmentSeconds Int @default(0)
-  version Int @default(0)
-  paymentStatus String @default("UNPAID")
-  notes String @default("")
-  bookedFor DateTime?
-  reservedUntil DateTime?
-  subtotal Decimal @default(0) @db.Decimal(12,2)
-  taxAmount Decimal @default(0) @db.Decimal(12,2)
-  discount Decimal @default(0) @db.Decimal(12,2)
-  checkedInAt DateTime?
-  assignedAt DateTime?
-  startedAt DateTime?
-  completedAt DateTime?
-  deliveredAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  branch Branch @relation(fields:[branchId,orgId], references:[id,orgId], onDelete:Restrict)
-  bay WashBay? @relation(fields:[bayId,orgId], references:[id,orgId], onDelete:Restrict)
-  service WashService @relation(fields:[serviceId,orgId], references:[id,orgId], onDelete:Restrict)
-  vehicle Vehicle @relation(fields:[vehicleId,orgId], references:[id,orgId], onDelete:Restrict)
-  history WashHistory[]
-  extraServices WashExtraService[]
-  workers WashWorker[]
-  payments Payment[]
-  feedback Feedback?
-  @@unique([id,orgId])
-  @@index([orgId,status,createdAt])
-  @@index([orgId,customerUserId])
-  @@index([orgId,branchId,bookedFor])
+  customerProfileId     String?
+  customerProfile       CustomerProfile?   @relation(fields: [customerProfileId, orgId], references: [id, orgId], onDelete: Restrict)
+  trackingLinks         CustomerTracking[]
+  id                    String             @id @default(uuid())
+  orgId                 String
+  branchId              String
+  bayId                 String?
+  serviceId             String
+  vehicleId             String
+  customerUserId        String?
+  status                String             @default("CHECKED_IN")
+  price                 Decimal            @db.Decimal(12, 2)
+  currency              String
+  serviceNameAr         String
+  serviceNameEn         String
+  estimatedMinutes      Int
+  timeAdjustmentSeconds Int                @default(0)
+  version               Int                @default(0)
+  paymentStatus         String             @default("UNPAID")
+  notes                 String             @default("")
+  bookedFor             DateTime?
+  reservedUntil         DateTime?
+  subtotal              Decimal            @default(0) @db.Decimal(12, 2)
+  taxAmount             Decimal            @default(0) @db.Decimal(12, 2)
+  discount              Decimal            @default(0) @db.Decimal(12, 2)
+  checkedInAt           DateTime?
+  assignedAt            DateTime?
+  startedAt             DateTime?
+  completedAt           DateTime?
+  deliveredAt           DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  org                   Organization       @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  branch                Branch             @relation(fields: [branchId, orgId], references: [id, orgId], onDelete: Restrict)
+  bay                   WashBay?           @relation(fields: [bayId, orgId], references: [id, orgId], onDelete: Restrict)
+  service               WashService        @relation(fields: [serviceId, orgId], references: [id, orgId], onDelete: Restrict)
+  vehicle               Vehicle            @relation(fields: [vehicleId, orgId], references: [id, orgId], onDelete: Restrict)
+  history               WashHistory[]
+  extraServices         WashExtraService[]
+  workers               WashWorker[]
+  payments              Payment[]
+  feedback              Feedback?
+
+  @@unique([id, orgId])
+  @@index([orgId, status, createdAt])
+  @@index([orgId, customerUserId])
+  @@index([orgId, branchId, bookedFor])
 }
+
 model WashExtraService {
-  id String @id @default(uuid())
-  orgId String
-  washId String
-  serviceId String
-  nameAr String
-  nameEn String
-  price Decimal @db.Decimal(12,2)
-  quantity Decimal @default(1) @db.Decimal(10,2)
-  unit String @default("unit")
+  id              String      @id @default(uuid())
+  orgId           String
+  washId          String
+  serviceId       String
+  nameAr          String
+  nameEn          String
+  price           Decimal     @db.Decimal(12, 2)
+  quantity        Decimal     @default(1) @db.Decimal(10, 2)
+  unit            String      @default("unit")
   durationMinutes Int
-  addedById String
-  createdAt DateTime @default(now())
-  wash Wash @relation(fields:[washId,orgId],references:[id,orgId],onDelete:Restrict)
-  service WashService @relation(fields:[serviceId,orgId],references:[id,orgId],onDelete:Restrict)
-  @@index([orgId,washId,createdAt])
+  addedById       String
+  createdAt       DateTime    @default(now())
+  wash            Wash        @relation(fields: [washId, orgId], references: [id, orgId], onDelete: Restrict)
+  service         WashService @relation(fields: [serviceId, orgId], references: [id, orgId], onDelete: Restrict)
+
+  @@index([orgId, washId, createdAt])
 }
+
 model ServicePricingRule {
-  id String @id @default(uuid())
-  orgId String
-  serviceId String
-  category String
-  size String
-  price Decimal @db.Decimal(12,2)
+  id              String       @id @default(uuid())
+  orgId           String
+  serviceId       String
+  category        String
+  size            String
+  price           Decimal      @db.Decimal(12, 2)
   durationMinutes Int?
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  service WashService @relation(fields:[serviceId,orgId], references:[id,orgId], onDelete:Restrict)
-  @@unique([serviceId,category,size])
-  @@index([orgId,serviceId])
+  org             Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  service         WashService  @relation(fields: [serviceId, orgId], references: [id, orgId], onDelete: Restrict)
+
+  @@unique([serviceId, category, size])
+  @@index([orgId, serviceId])
 }
+
 model Feedback {
-  id String @id @default(uuid())
-  orgId String
-  washId String @unique
+  id             String       @id @default(uuid())
+  orgId          String
+  washId         String       @unique
   customerUserId String
-  rating Int
-  comment String
-  createdAt DateTime @default(now())
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  wash Wash @relation(fields:[washId,orgId], references:[id,orgId], onDelete:Restrict)
-  @@unique([washId,orgId])
-  @@index([orgId,createdAt])
+  rating         Int
+  comment        String
+  createdAt      DateTime     @default(now())
+  org            Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  wash           Wash         @relation(fields: [washId, orgId], references: [id, orgId], onDelete: Restrict)
+
+  @@unique([washId, orgId])
+  @@index([orgId, createdAt])
 }
+
 model WashHistory {
-  id String @id @default(uuid())
-  washId String
-  wash Wash @relation(fields:[washId], references:[id], onDelete:Restrict)
-  orgId String
+  id         String   @id @default(uuid())
+  washId     String
+  wash       Wash     @relation(fields: [washId], references: [id], onDelete: Restrict)
+  orgId      String
   fromStatus String?
-  toStatus String
-  actorId String
-  source String @default("HUMAN")
-  createdAt DateTime @default(now())
-  @@index([orgId,washId,createdAt])
+  toStatus   String
+  actorId    String
+  source     String   @default("HUMAN")
+  createdAt  DateTime @default(now())
+
+  @@index([orgId, washId, createdAt])
 }
+
 model WashWorker {
-  id String @id @default(uuid())
-  orgId String
-  washId String
+  id             String    @id @default(uuid())
+  orgId          String
+  washId         String
   employeeUserId String
-  role String @default("WORKER")
-  startedAt DateTime @default(now())
-  endedAt DateTime?
-  wash Wash @relation(fields:[washId,orgId], references:[id,orgId], onDelete:Restrict)
-  @@index([orgId,washId])
+  role           String    @default("WORKER")
+  startedAt      DateTime  @default(now())
+  endedAt        DateTime?
+  wash           Wash      @relation(fields: [washId, orgId], references: [id, orgId], onDelete: Restrict)
+
+  @@index([orgId, washId])
 }
+
 model Payment {
-  id String @id @default(uuid())
-  orgId String
-  washId String
-  amount Decimal @db.Decimal(12,2)
-  currency String
-  method String
-  reference String?
+  id         String   @id @default(uuid())
+  orgId      String
+  washId     String
+  amount     Decimal  @db.Decimal(12, 2)
+  currency   String
+  method     String
+  reference  String?
   recordedBy String
-  createdAt DateTime @default(now())
-  wash Wash @relation(fields:[washId,orgId], references:[id,orgId], onDelete:Restrict)
-  @@unique([orgId,reference])
-  @@index([orgId,createdAt])
+  createdAt  DateTime @default(now())
+  wash       Wash     @relation(fields: [washId, orgId], references: [id, orgId], onDelete: Restrict)
+
+  @@unique([orgId, reference])
+  @@index([orgId, createdAt])
 }
+
 model Camera {
-  id String @id @default(uuid())
-  orgId String
-  branchId String
-  bayId String?
-  name String
-  protocol String @default("SIMULATED")
-  ipAddress String?
-  credentialRef String?
-  status String @default("UNCONFIGURED")
-  processingEnabled Boolean @default(false)
-  zones Json @default("[]")
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  branch Branch @relation(fields:[branchId,orgId], references:[id,orgId], onDelete:Restrict)
-  bay WashBay? @relation(fields:[bayId,orgId], references:[id,orgId], onDelete:Restrict)
-  observations Observation[]
-  @@unique([id,orgId])
+  id                String        @id @default(uuid())
+  orgId             String
+  branchId          String
+  bayId             String?
+  name              String
+  protocol          String        @default("SIMULATED")
+  ipAddress         String?
+  credentialRef     String?
+  status            String        @default("UNCONFIGURED")
+  processingEnabled Boolean       @default(false)
+  zones             Json          @default("[]")
+  org               Organization  @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  branch            Branch        @relation(fields: [branchId, orgId], references: [id, orgId], onDelete: Restrict)
+  bay               WashBay?      @relation(fields: [bayId, orgId], references: [id, orgId], onDelete: Restrict)
+  observations      Observation[]
+
+  @@unique([id, orgId])
   @@index([orgId])
 }
+
 model Observation {
-  id String @id @default(uuid())
-  orgId String
-  cameraId String
-  eventId String @unique
-  type String
-  confidence Float
-  source String
-  trackId String?
-  reviewStatus String @default("PENDING")
-  rawPayload Json
-  createdAt DateTime @default(now())
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  camera Camera @relation(fields:[cameraId,orgId], references:[id,orgId], onDelete:Restrict)
-  reviews ObservationReview[]
-  @@index([orgId,reviewStatus,createdAt])
+  id           String              @id @default(uuid())
+  orgId        String
+  cameraId     String
+  eventId      String              @unique
+  type         String
+  confidence   Float
+  source       String
+  trackId      String?
+  reviewStatus String              @default("PENDING")
+  rawPayload   Json
+  createdAt    DateTime            @default(now())
+  org          Organization        @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  camera       Camera              @relation(fields: [cameraId, orgId], references: [id, orgId], onDelete: Restrict)
+  reviews      ObservationReview[]
+
+  @@index([orgId, reviewStatus, createdAt])
 }
+
 model ObservationReview {
-  id String @id @default(uuid())
-  orgId String
+  id            String      @id @default(uuid())
+  orgId         String
   observationId String
-  actorId String
-  decision String
-  note String
-  createdAt DateTime @default(now())
-  observation Observation @relation(fields:[observationId], references:[id], onDelete:Restrict)
-  @@index([orgId,observationId])
+  actorId       String
+  decision      String
+  note          String
+  createdAt     DateTime    @default(now())
+  observation   Observation @relation(fields: [observationId], references: [id], onDelete: Restrict)
+
+  @@index([orgId, observationId])
 }
 
 model VideoAnalysis {
-  id String @id @default(uuid())
-  orgId String
-  branchId String
-  cameraId String?
-  createdBy String
-  sourceName String
-  storageKey String @unique
+  id           String                @id @default(uuid())
+  orgId        String
+  branchId     String
+  cameraId     String?
+  createdBy    String
+  sourceName   String
+  storageKey   String                @unique
   sourceSha256 String
-  status String @default("QUEUED")
-  config Json @default("{}")
-  result Json?
-  errorCode String?
-  attempts Int @default(0)
-  lockedAt DateTime?
-  createdAt DateTime @default(now())
-  completedAt DateTime?
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  reviews VideoAnalysisReview[]
-  @@unique([id,orgId])
-  @@index([orgId,createdAt])
-  @@index([status,createdAt])
+  status       String                @default("QUEUED")
+  config       Json                  @default("{}")
+  result       Json?
+  errorCode    String?
+  attempts     Int                   @default(0)
+  lockedAt     DateTime?
+  createdAt    DateTime              @default(now())
+  completedAt  DateTime?
+  org          Organization          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  reviews      VideoAnalysisReview[]
+
+  @@unique([id, orgId])
+  @@index([orgId, createdAt])
+  @@index([status, createdAt])
 }
+
 model VideoAnalysisReview {
-  id String @id @default(uuid())
+  id         String        @id @default(uuid())
   analysisId String
-  orgId String
-  trackId String
-  actorId String
-  category String @default("UNKNOWN")
-  size String @default("UNKNOWN")
-  serviceId String?
-  washed Boolean?
-  note String @default("")
-  createdAt DateTime @default(now())
-  analysis VideoAnalysis @relation(fields:[analysisId,orgId], references:[id,orgId], onDelete:Restrict)
-  @@index([orgId,analysisId,trackId,createdAt])
+  orgId      String
+  trackId    String
+  actorId    String
+  category   String        @default("UNKNOWN")
+  size       String        @default("UNKNOWN")
+  serviceId  String?
+  washed     Boolean?
+  note       String        @default("")
+  createdAt  DateTime      @default(now())
+  analysis   VideoAnalysis @relation(fields: [analysisId, orgId], references: [id, orgId], onDelete: Restrict)
+
+  @@index([orgId, analysisId, trackId, createdAt])
 }
+
 model AutomationRule {
-  id String @id @default(uuid())
-  orgId String
-  name String
-  trigger String
-  enabled Boolean @default(true)
-  minConfidence Float @default(0)
-  action String @default("CREATE_ALERT")
-  message String
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  createdAt DateTime @default(now())
-  @@index([orgId,trigger,enabled])
+  id            String       @id @default(uuid())
+  orgId         String
+  name          String
+  trigger       String
+  enabled       Boolean      @default(true)
+  minConfidence Float        @default(0)
+  action        String       @default("CREATE_ALERT")
+  message       String
+  org           Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  createdAt     DateTime     @default(now())
+
+  @@index([orgId, trigger, enabled])
 }
+
 model AutomationEvent {
-  id String @id @default(uuid())
-  orgId String
-  key String
-  type String
-  version Int @default(1)
-  source String
-  payload Json
-  status String @default("PENDING")
-  attempts Int @default(0)
-  nextAttemptAt DateTime @default(now())
-  lockedAt DateTime?
-  lastError String?
-  createdAt DateTime @default(now())
-  processedAt DateTime?
-  org Organization @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  executions AutomationExecution[]
-  @@unique([orgId,key])
-  @@index([status,nextAttemptAt])
+  id            String                @id @default(uuid())
+  orgId         String
+  key           String
+  type          String
+  version       Int                   @default(1)
+  source        String
+  payload       Json
+  status        String                @default("PENDING")
+  attempts      Int                   @default(0)
+  nextAttemptAt DateTime              @default(now())
+  lockedAt      DateTime?
+  lastError     String?
+  createdAt     DateTime              @default(now())
+  processedAt   DateTime?
+  org           Organization          @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  executions    AutomationExecution[]
+
+  @@unique([orgId, key])
+  @@index([status, nextAttemptAt])
 }
+
 model AutomationExecution {
-  id String @id @default(uuid())
-  orgId String
-  eventId String
-  ruleId String
-  status String
-  result String
-  createdAt DateTime @default(now())
-  event AutomationEvent @relation(fields:[eventId], references:[id], onDelete:Restrict)
-  @@unique([eventId,ruleId])
-  @@index([orgId,createdAt])
+  id        String          @id @default(uuid())
+  orgId     String
+  eventId   String
+  ruleId    String
+  status    String
+  result    String
+  createdAt DateTime        @default(now())
+  event     AutomationEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+
+  @@unique([eventId, ruleId])
+  @@index([orgId, createdAt])
 }
+
 model Notification {
-  id String @id @default(uuid())
-  orgId String?
+  id          String        @id @default(uuid())
+  orgId       String?
   recipientId String?
-  permission String @default("wash.view_sessions")
-  type String
-  sourceKey String? @unique
-  message String
-  readBy String[] @default([])
-  createdAt DateTime @default(now())
-  org Organization? @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  @@index([orgId,createdAt])
+  permission  String        @default("wash.view_sessions")
+  type        String
+  sourceKey   String?       @unique
+  message     String
+  readBy      String[]      @default([])
+  createdAt   DateTime      @default(now())
+  org         Organization? @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@index([orgId, createdAt])
 }
+
 model PushSubscription {
-  id String @id @default(uuid())
-  userId String
-  endpoint String @unique
-  p256dh String
-  auth String
+  id        String   @id @default(uuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
   createdAt DateTime @default(now())
+
   @@index([userId])
 }
+
 model PushDelivery {
-  id String @id @default(uuid())
+  id             String   @id @default(uuid())
   subscriptionId String
   notificationId String
-  status String @default("PENDING")
-  createdAt DateTime @default(now())
-  @@unique([subscriptionId,notificationId])
-  @@index([status,createdAt])
+  status         String   @default("PENDING")
+  createdAt      DateTime @default(now())
+
+  @@unique([subscriptionId, notificationId])
+  @@index([status, createdAt])
 }
+
 model AuditLog {
-  id String @id @default(uuid())
-  orgId String?
-  actorId String?
-  action String
+  id         String   @id @default(uuid())
+  orgId      String?
+  actorId    String?
+  action     String
   entityType String
-  entityId String
-  metadata Json @default("{}")
-  createdAt DateTime @default(now())
-  @@index([orgId,createdAt])
-  @@index([actorId,createdAt])
+  entityId   String
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+
+  @@index([orgId, createdAt])
+  @@index([actorId, createdAt])
 }
+
 model Outbox {
-  id String @id @default(uuid())
-  orgId String?
-  kind String
-  recipient String
+  id               String        @id @default(uuid())
+  orgId            String?
+  kind             String
+  recipient        String
   encryptedPayload String
-  status String @default("PROVIDER_UNCONFIGURED")
-  createdAt DateTime @default(now())
-  org Organization? @relation(fields:[orgId], references:[id], onDelete:Restrict)
-  @@index([orgId,status])
+  status           String        @default("PROVIDER_UNCONFIGURED")
+  createdAt        DateTime      @default(now())
+  org              Organization? @relation(fields: [orgId], references: [id], onDelete: Restrict)
+
+  @@index([orgId, status])
 }
+
 model RateLimit {
-  id String @id
-  count Int @default(1)
+  id        String   @id
+  count     Int      @default(1)
   expiresAt DateTime
 }
+
 model AuthRateLimit {
-  id String @id
-  key String @unique
-  count Int
+  id          String @id
+  key         String @unique
+  count       Int
   lastRequest BigInt
 }
 
 model CustomerTracking {
- id String @id @default(uuid())
- orgId String
- washId String
- passwordHash String
- sessionHash String?
- sessionExpiresAt DateTime?
- expiresAt DateTime
- revokedAt DateTime?
- createdAt DateTime @default(now())
- wash Wash @relation(fields:[washId,orgId],references:[id,orgId],onDelete:Restrict)
- @@index([orgId,washId])
+  id               String    @id @default(uuid())
+  orgId            String
+  washId           String
+  passwordHash     String
+  sessionHash      String?
+  sessionExpiresAt DateTime?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  wash             Wash      @relation(fields: [washId, orgId], references: [id, orgId], onDelete: Restrict)
+
+  @@index([orgId, washId])
 }
 
 model CustomerProfile {
- id String @id @default(uuid())
- orgId String
- name String
- phone String
- createdAt DateTime @default(now())
- updatedAt DateTime @updatedAt
- org Organization @relation(fields:[orgId],references:[id],onDelete:Restrict)
- washes Wash[]
- @@unique([id,orgId])
- @@unique([orgId,phone])
- @@index([orgId,createdAt])
+  id        String       @id @default(uuid())
+  orgId     String
+  name      String
+  phone     String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  washes    Wash[]
+
+  @@unique([id, orgId])
+  @@unique([orgId, phone])
+  @@index([orgId, createdAt])
 }
 
 model CameraVisit {
- id String @id @default(uuid())
- orgId String
- branchId String
- bayId String
- cameraId String?
- analysisId String
- streamKey String
- episodeKey String
- status String @default("IN_BAY")
- replay Boolean @default(true)
- enteredSeconds Float
- exitedSeconds Float?
- occupancySeconds Float?
- enteredAt DateTime?
- exitedAt DateTime?
- entryConfidence Float
- exitConfidence Float?
- vehicleClass String @default("UNKNOWN")
- category String @default("UNKNOWN")
- categorySource String @default("UNRESOLVED")
- categoryEvidence Json @default("{}")
- washStatus String @default("UNCONFIRMED")
- washType String @default("UNKNOWN")
- washTypeEvidence Json @default("{}")
- reviewedBy String?
- reviewedAt DateTime?
- createdAt DateTime @default(now())
- updatedAt DateTime @updatedAt
- bay WashBay @relation(fields:[bayId,orgId],references:[id,orgId],onDelete:Restrict)
- @@unique([orgId,episodeKey])
- @@index([orgId,branchId,createdAt])
- @@index([orgId,streamKey,status])
+  id               String    @id @default(uuid())
+  orgId            String
+  branchId         String
+  bayId            String
+  cameraId         String?
+  analysisId       String
+  streamKey        String
+  episodeKey       String
+  status           String    @default("IN_BAY")
+  replay           Boolean   @default(true)
+  enteredSeconds   Float
+  exitedSeconds    Float?
+  occupancySeconds Float?
+  enteredAt        DateTime?
+  exitedAt         DateTime?
+  entryConfidence  Float
+  exitConfidence   Float?
+  vehicleClass     String    @default("UNKNOWN")
+  category         String    @default("UNKNOWN")
+  categorySource   String    @default("UNRESOLVED")
+  categoryEvidence Json      @default("{}")
+  washStatus       String    @default("UNCONFIRMED")
+  washType         String    @default("UNKNOWN")
+  washTypeEvidence Json      @default("{}")
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  bay              WashBay   @relation(fields: [bayId, orgId], references: [id, orgId], onDelete: Restrict)
+
+  @@unique([orgId, episodeKey])
+  @@index([orgId, branchId, createdAt])
+  @@index([orgId, streamKey, status])
 }
 
 model ContractAcceptance {
- id String @id @default(uuid())
- orgId String
- userId String
- version String
- signerName String
- signerEmail String
- organizationName String
- terms Json
- termsHash String
- acceptedAt DateTime @default(now())
- org Organization @relation(fields:[orgId],references:[id],onDelete:Restrict)
- user User @relation(fields:[userId],references:[id],onDelete:Restrict)
- @@unique([orgId,userId,version])
- @@index([orgId,acceptedAt])
+  id               String       @id @default(uuid())
+  orgId            String
+  userId           String
+  version          String
+  signerName       String
+  signerEmail      String
+  organizationName String
+  terms            Json
+  termsHash        String
+  acceptedAt       DateTime     @default(now())
+  org              Organization @relation(fields: [orgId], references: [id], onDelete: Restrict)
+  user             User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([orgId, userId, version])
+  @@index([orgId, acceptedAt])
 }

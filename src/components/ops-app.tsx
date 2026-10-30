@@ -1053,6 +1053,7 @@ export function OpsApp({ view }: { view: string }) {
                 <article><h3>{t("featureAutomation")}</h3><p>{t("featureAutomationText")}</p></article>
               </div>
             </section>
+            <section className="about-platform"><div className="section-heading"><h2>{t("aboutTitle")}</h2><p>{t("aboutText")}</p></div><div className="about-columns"><article><h3>{t("servicesTitle")}</h3><p>{t("servicesText")}</p></article><article><h3>{t("benefitsTitle")}</h3><ul><li>{t("benefit1")}</li><li>{t("benefit2")}</li><li>{t("benefit3")}</li><li>{t("benefit4")}</li></ul></article></div></section>
             <section className="how-it-works" aria-labelledby="how-title"><div className="section-heading"><h2 id="how-title">{t("how")}</h2><p>{locale==='ar'?'من تسجيل العربية وحتى التسليم، كل خطوة واضحة ومتابعة في نفس الشاشة.':'From vehicle arrival to handover, every step stays clear and visible in one workspace.'}</p></div><ol className="steps"><li><strong>1</strong><span>{t("step1")}</span></li><li><strong>2</strong><span>{t("step2")}</span></li><li><strong>3</strong><span>{t("step3")}</span></li><li><strong>4</strong><span>{t("step4")}</span></li></ol></section>
             <section className="public-cta">
               <div>

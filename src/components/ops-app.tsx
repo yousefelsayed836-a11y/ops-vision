@@ -1038,6 +1038,9 @@ export function OpsApp({ view }: { view: string }) {
                   <Link className="button outline" href={href("login")}>
                     {t("dashboard")}
                   </Link>
+                  <a className="button outline" href="/guides/opsvision-setup-guide-ar.pdf" download>
+                    {t("setupGuide")}
+                  </a>
                 </div>
               </div>
             </section>

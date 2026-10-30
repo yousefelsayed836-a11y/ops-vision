@@ -72,6 +72,7 @@ export const createWashInput = z.object({
   branchId: z.uuid(),
   bayId: z.uuid().optional(),
   serviceId: z.preprocess(value=>value===''?undefined:value,z.uuid().optional()),
+  quantity: z.coerce.number().positive().max(10000).default(1),
   vehicleId: z.uuid(),
   notes: z.string().max(1000).default(""),
   bookedFor: z.iso.datetime().optional(),

@@ -5,9 +5,9 @@ export const washCatalog=[
  {ar:'داخل/خارج',en:'Interior / exterior'}, {ar:'داخل',en:'Interior'},
  {ar:'خارج',en:'Exterior'}, {ar:'ماء',en:'Water'}, {ar:'سجاد',en:'Carpet',unit:'meter'},
 ] as const;
-export const vehicleCategories=['SEDAN','SUV','FULL_SIZE_SUV','MOTORCYCLE','BICYCLE'] as const;
+export const vehicleCategories=['SEDAN','SUV','FULL_SIZE_SUV','MOTORCYCLE','BICYCLE','OTHER'] as const;
 export const builtinVehicleCategories=['SEDAN','SUV','FULL_SIZE_SUV','MOTORCYCLE','BICYCLE','HATCHBACK','CROSSOVER','PICKUP','VAN','MINIBUS','LARGE'] as const;
-const vehicleLabels:Record<string,[string,string]>={ALL:['الكل','All'],SEDAN:['سيدان','Sedan'],SUV:['SUV','SUV'],MOTORCYCLE:['دراجة نارية','Motorcycle'],BICYCLE:['عجلة','Bicycle'],FULL_SIZE_SUV:['4×4','4×4'],HATCHBACK:['هاتشباك','Hatchback'],CROSSOVER:['كروس أوفر CUV','Crossover / CUV'],PICKUP:['بيك أب','Pickup'],VAN:['فان','Van'],MINIBUS:['ميني باص','Minibus'],LARGE:['مركبة كبيرة','Large vehicle']};
+const vehicleLabels:Record<string,[string,string]>={ALL:['الكل','All'],OTHER:['خدمة أخرى','Other service'],SEDAN:['سيدان','Sedan'],SUV:['SUV','SUV'],MOTORCYCLE:['دراجة نارية','Motorcycle'],BICYCLE:['عجلة','Bicycle'],FULL_SIZE_SUV:['4×4','4×4'],HATCHBACK:['هاتشباك','Hatchback'],CROSSOVER:['كروس أوفر CUV','Crossover / CUV'],PICKUP:['بيك أب','Pickup'],VAN:['فان','Van'],MINIBUS:['ميني باص','Minibus'],LARGE:['مركبة كبيرة','Large vehicle']};
 export function vehicleCategoryLabel(value:string,locale:string,custom:readonly {code:string;nameAr:string;nameEn:string}[]=[]){return custom.find(item=>item.code===value)?.[locale==='ar'?'nameAr':'nameEn']??vehicleLabels[value]?.[locale==='ar'?0:1]??value;}
 export function servicePriceForCategory(service:{price:string;pricingRules?:readonly {category:string;size:string;price:string}[]},category:string,size='MEDIUM'){
  const matches=(service.pricingRules??[]).filter(rule=>(rule.category===category||rule.category==='ALL')&&(rule.size===size||rule.size==='ALL'));

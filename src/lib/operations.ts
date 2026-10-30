@@ -66,7 +66,7 @@ export async function createVehicle(scope: Scope, raw: unknown) {
   const data = vehicleInput.parse(raw);
   const plate = data.plate ?? `AUTO-${randomUUID().replaceAll('-', '')}`;
   return transaction(async (tx) => {
-    assert(builtinVehicleCategories.includes(data.category as (typeof builtinVehicleCategories)[number])||!!(await tx.vehicleCategory.findFirst({where:{orgId:scope.orgId,code:data.category,active:true}})),"INVALID_CATEGORY",422);
+    assert(data.category==='OTHER'||builtinVehicleCategories.includes(data.category as (typeof builtinVehicleCategories)[number])||!!(await tx.vehicleCategory.findFirst({where:{orgId:scope.orgId,code:data.category,active:true}})),"INVALID_CATEGORY",422);
     const vehicle = await tx.vehicle.create({
       data: {
         ...data,
@@ -138,7 +138,7 @@ export async function createWash(scope: Scope, raw: unknown, startImmediately=fa
         Number(b.size !== "ALL") -
         (Number(a.category !== "ALL") * 2 + Number(a.size !== "ALL")),
     );
-    const subtotal = pricing[0]?.price ?? service.price;
+    const subtotal = new Prisma.Decimal(pricing[0]?.price ?? service.price).mul(data.quantity);
     const serviceMinutes = org.defaultWashMinutes;
     const discount = new Prisma.Decimal(data.discount);
     assert(discount.lte(subtotal), "DISCOUNT_EXCEEDS_TOTAL");

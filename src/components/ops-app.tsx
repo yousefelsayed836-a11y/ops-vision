@@ -1,5 +1,5 @@
 "use client";
-import {LoginFields,rememberLoginEmail} from './login-fields';
+import {LoginFields,rememberLoginEmail,saveBrowserPassword} from './login-fields';
 import {ContractGate,ContractsPanel} from './contracts-panel';
 import {washCatalog,vehicleCategoryLabel,vehicleCategories} from "@/lib/catalog";
 import {saudiDateTime} from "@/lib/saudi-time";
@@ -485,7 +485,8 @@ export function OpsApp({ view }: { view: string }) {
   }
   async function publicSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const values = Object.fromEntries(new FormData(e.currentTarget).entries());
+    const form=e.currentTarget;
+    const values = Object.fromEntries(new FormData(form).entries());
     setBusy(true);
     try {
       if (view === "register") {
@@ -508,6 +509,7 @@ export function OpsApp({ view }: { view: string }) {
           return;
         }
         rememberLoginEmail(String(values.email).trim().toLowerCase());
+        await saveBrowserPassword(form);
         window.location.assign(href("dashboard"));
       } else if (view === "activate") {
         await api(
@@ -528,23 +530,14 @@ export function OpsApp({ view }: { view: string }) {
       setBusy(false);
     }
   }
-  async function signInWithPasskey(autoFill=false){
-    if(!autoFill)setBusy(true);
-    try{
-      const result=await authClient.signIn.passkey(autoFill?{autoFill:true}:undefined);
-      if(result.error){if(!autoFill)setToast({text:locale==='ar'?'تعذر تسجيل الدخول بمفتاح المرور. تأكد من تسجيل مفتاح لهذا الحساب على هذا الجهاز.':'Could not sign in with a passkey. Make sure this account has a passkey on this device.',error:true});return;}
-      if(result.data?.user?.email)rememberLoginEmail(result.data.user.email.toLowerCase());
-      window.location.assign(href('dashboard'));
-    }catch{if(!autoFill)setToast({text:locale==='ar'?'تعذر تشغيل مفتاح المرور على هذا المتصفح أو الجهاز.':'Passkeys are unavailable in this browser or device.',error:true});}
-    finally{if(!autoFill)setBusy(false);}
-  }
-  async function addPasskey(){
+  async function signInWithSavedPassword(email:string,password:string){
     setBusy(true);
     try{
-      const result=await authClient.passkey.addPasskey({name:locale==='ar'?'مفتاح OpsVision':'OpsVision passkey'});
-      if(result.error)throw new Error(result.error.message??'PASSKEY_REGISTRATION_FAILED');
-      setToast({text:locale==='ar'?'تم تسجيل مفتاح المرور. يمكنك الآن الدخول ببصمة الجهاز أو وسيلة القفل المدعومة.':'Passkey added. You can now sign in with your device biometric or supported screen lock.',error:false});
-    }catch{setToast({text:locale==='ar'?'لم يكتمل تسجيل مفتاح المرور. استخدم HTTPS وجهازًا يدعم مفاتيح المرور ثم حاول مجددًا.':'Passkey setup failed. Use HTTPS and a device that supports passkeys, then try again.',error:true});}
+      const result=await authClient.signIn.email({email,password});
+      if(result.error){setToast({text:locale==='ar'?'كلمة المرور المحفوظة غير صحيحة أو تحتاج تحديثًا.':'The saved password is incorrect or needs updating.',error:true});return;}
+      rememberLoginEmail(email);
+      window.location.assign(href('dashboard'));
+    }catch(error){showError(error);}
     finally{setBusy(false);}
   }
   const field = (name: string, type?: string, required = true): FormField => ({
@@ -1154,7 +1147,7 @@ export function OpsApp({ view }: { view: string }) {
                     </>
                   ) : (
                     <>
-                      <LoginFields onPasskey={()=>void signInWithPasskey()} busy={busy}/>
+                      <LoginFields onSavedLogin={(email,password)=>void signInWithSavedPassword(email,password)} busy={busy}/>
                     </>
                   )}
                   <button
@@ -1234,7 +1227,6 @@ export function OpsApp({ view }: { view: string }) {
             <strong>{me?.user.name ?? "OpsVision"}</strong>
             <small>{me?.user.email}</small>
           </div>
-          <button type="button" className="text-button" disabled={busy} onClick={()=>void addPasskey()}>{locale==='ar'?'إضافة مفتاح مرور لهذا الجهاز':'Add a passkey on this device'}</button>
           <button
             className="icon-button"
             disabled={busy} aria-label={t("logout")}
